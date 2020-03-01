@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coderprabhu-api-app
+  labels:
+    app: coderprabhu-api
+spec:
+  selector:
+    matchLabels:
+      app: coderprabhu-api
+      tier: api
+  template:
+    metadata:
+      labels:
+        app: coderprabhu-api
+        tier: api
+    spec:
+      containers:
+      - name: coderprabhu-api-app
+        image: gcr.io/kubegcp-256806/coderprabhu-api:v1
+        ports:
+        - containerPort: 8080
