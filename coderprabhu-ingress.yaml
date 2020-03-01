@@ -1,13 +1,13 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: coderprabhu-ui-web
+  name: coderprabhu-ingress
   annotations:
     kubernetes.io/ingress.allow-http: "false"
     kubernetes.io/ingress.global-static-ip-name: coderprabhu-ip
     networking.gke.io/managed-certificates: coderprabhudotcommanagedcert,coderprabhuapidotcommanagedcert
   labels:
-    app: coderprabhu-ui
+    app: coderprabhu-app
 spec:
   rules:
   - host: api.coderprabhu.com
