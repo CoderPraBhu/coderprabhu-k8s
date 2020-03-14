@@ -29,5 +29,11 @@ curl https://api.coderprabhu.com/actuator/health
 Additional commands:  
 ```
 gcloud container clusters create coderprabhu-cluster    
-gcloud compute addresses create coderprabhu-ip --global  
+gcloud compute addresses create coderprabhu-ip --global
+  
+gcloud compute addresses describe coderprabhu-ip --global
+kubectl get ingress
+kubectl get ingress coderprabhu-ingress --output yaml
+kubectl get deployment coderprabhu-ui-web
+kubectl get deployment coderprabhu-api-app
 ```
