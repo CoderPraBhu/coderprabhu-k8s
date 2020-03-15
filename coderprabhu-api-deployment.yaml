@@ -18,6 +18,7 @@ spec:
       containers:
       - name: coderprabhu-api-app
         image: gcr.io/kubegcp-256806/coderprabhu-api:v3
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         resources:
@@ -27,3 +28,15 @@ spec:
           limits:
             cpu: "0.3"  
             memory: "192Mi" 
+        livenessProbe:
+          httpGet:
+            port: 8080
+            path: /actuator/info
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            port: 8080
+            path: /actuator/health
+          initialDelaySeconds: 25
+          periodSeconds: 10
