@@ -4,59 +4,29 @@ metadata:
   name: coderprabhu-ingress
   annotations:
     kubernetes.io/ingress.global-static-ip-name: coderprabhu-ip
-    networking.gke.io/managed-certificates: coderprabhudotcommanagedcert,coderprabhuapidotcommanagedcert
+    networking.gke.io/managed-certificates: "coderprabhudotcommanagedcert,coderprabhuapidotcommanagedcert,coderprabhuwwwdotcommanagedcert"
   labels:
-    app: coderprabhu-api
+    app: coderprabhu-ui
 spec:
   rules:
   - host: www.coderprabhu.com
     http:
-      paths: 
+      paths:
         - path: /*
           backend:
             serviceName: coderprabhu-ui-backend
-            servicePort: 8080
+            servicePort: httpuiport
   - host: coderprabhu.com
     http:
       paths: 
-        - path: /*
+        - path: /*      
           backend:
             serviceName: coderprabhu-ui-backend
-            servicePort: 8080
+            servicePort: httpuiport
   - host: api.coderprabhu.com
     http:
       paths:
-      - path: /*
-        backend:
-          serviceName: coderprabhu-api-backend
-          servicePort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: coderprabhu-ui-backend
-  labels:
-    app: coderprabhu-ui
-spec:
-  type: NodePort
-  selector:
-    app: coderprabhu-ui
-    tier: web
-  ports:
-  - port: 8080
-    targetPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: coderprabhu-api-backend
-  labels:
-    app: coderprabhu-api
-spec:
-  type: NodePort
-  selector:
-    app: coderprabhu-api
-    tier: api
-  ports:
-  - port: 8080
-    targetPort: 8080    
+        - path: /*
+          backend:
+            serviceName: coderprabhu-api-backend
+            servicePort: httpapiport

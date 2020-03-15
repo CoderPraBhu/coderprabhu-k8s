@@ -6,14 +6,29 @@ This Repo for K8S: https://github.com/CoderPraBhu/coderprabhu-k8s
 
 Commands:  
 
-To update the k8s deployment with new version, update the api deployment yaml with new 
-container image versions and execute
+To create required google managed certs, execute
+````
+kubectl apply -f coderprabhu-ui-dot-com-cert.yaml  
+kubectl apply -f coderprabhu-api-dot-com-cert.yaml  
+kubectl apply -f coderprabhu-www-dot-com-cert.yaml  
+````
+To remove all k8s objects, execute
+````
+kubectl delete -f coderprabhu-ingress.yaml 
+kubectl delete -f coderprabhu-api-backend-service.yaml  
+kubectl delete -f coderprabhu-ui-backend-service.yaml  
+kubectl delete -f coderprabhu-api-deployment.yaml  
+kubectl delete -f coderprabhu-ui-deployment.yaml  
+````
+When code is updated update the ui and api deployment yaml with new 
+container image versions.
+To create or update the k8s deployment
 ````
 kubectl apply -f coderprabhu-api-deployment.yaml  
 kubectl apply -f coderprabhu-ui-deployment.yaml  
-kubectl apply -f coderprabhu-ui-dot-com-cert.yaml  
-kubectl apply -f coderprabhu-api-dot-com-cert.yaml  
-kubectl apply -f coderprabhu-ingress.yaml  
+kubectl apply -f coderprabhu-api-backend-service.yaml  
+kubectl apply -f coderprabhu-ui-backend-service.yaml  
+kubectl apply -f coderprabhu-ingress.yaml 
 ````
 Curl commands:   
 ````
@@ -23,17 +38,33 @@ curl http://www.coderprabhu.com
 curl https://www.coderprabhu.com
 curl http://api.coderprabhu.com
 curl https://api.coderprabhu.com
+curl http://api.coderprabhu.com/hello
+curl https://api.coderprabhu.com/hello
+curl http://api.coderprabhu.com/count
+curl https://api.coderprabhu.com/count
 curl https://api.coderprabhu.com/actuator/info
 curl https://api.coderprabhu.com/actuator/health
 ````   
 Additional commands:  
 ```
 gcloud container clusters create coderprabhu-cluster    
-gcloud compute addresses create coderprabhu-ip --global
-  
+gcloud compute addresses create coderprabhu-ip --global  
 gcloud compute addresses describe coderprabhu-ip --global
 kubectl get ingress
+kubectl describe ingress coderprabhu-ingress
 kubectl get ingress coderprabhu-ingress --output yaml
 kubectl get deployment coderprabhu-ui-web
+kubectl describe deployment coderprabhu-ui-web
 kubectl get deployment coderprabhu-api-app
+kubectl get service coderprabhu-api-backend
+kubectl get service coderprabhu-ui-backend
+kubectl describe service coderprabhu-api-backend
+kubectl describe service coderprabhu-ui-backend
+gcloud compute forwarding-rules list
+gcloud compute forwarding-rules describe k8s-fw-default-coderprabhu-ingress--de7ff4b20a1828c3 --global
+gcloud compute target-http-proxies list
+gcloud compute target-https-proxies list
+gcloud compute target-http-proxies describe k8s-tp-default-coderprabhu-ingress--de7ff4b20a1828c3
+gcloud compute url-maps list
+gcloud compute url-maps describe k8s-um-default-coderprabhu-ingress--de7ff4b20a1828c3
 ```
