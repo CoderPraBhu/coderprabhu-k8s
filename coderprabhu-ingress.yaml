@@ -4,7 +4,7 @@ metadata:
   name: coderprabhu-ingress
   annotations:
     kubernetes.io/ingress.global-static-ip-name: coderprabhu-ip
-    networking.gke.io/managed-certificates: "coderprabhudotcommanagedcert,coderprabhuapidotcommanagedcert,coderprabhuwwwdotcommanagedcert,campcoderprabhudotcommanagedcert,menucoderprabhudotcommanagedcert"
+    networking.gke.io/managed-certificates: "coderprabhudotcommanagedcert,coderprabhuapidotcommanagedcert,coderprabhuwwwdotcommanagedcert,campcoderprabhudotcommanagedcert,campapicoderprabhudotcommanagedcert,menucoderprabhudotcommanagedcert,whatsgoodonmenudotcommanagedcert,wwwwhatsgoodonmenudotcommanagedcert"
   labels:
     app: coderprabhu-ui
 spec:
@@ -37,6 +37,13 @@ spec:
           backend:
             serviceName: camp-ui-backend
             servicePort: httpuiport            
+  - host: campapi.coderprabhu.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: camp-api-backend
+            servicePort: httpapiport            
   - host: menu.coderprabhu.com
     http:
       paths:
@@ -44,3 +51,17 @@ spec:
           backend:
             serviceName: menu-ui-backend
             servicePort: httpuiport            
+  - host: whatsgoodonmenu.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: menu-ui-backend
+            servicePort: httpuiport            
+  - host: www.whatsgoodonmenu.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: menu-ui-backend
+            servicePort: httpuiport                        
