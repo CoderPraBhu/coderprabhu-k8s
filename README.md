@@ -45,8 +45,34 @@ curl https://api.coderprabhu.com/count
 curl https://api.coderprabhu.com/actuator/info
 curl https://api.coderprabhu.com/actuator/health
 ````   
+Storage:  
+```
+https://kubernetes.io/blog/2017/01/running-mongodb-on-kubernetes-with-statefulsets/
+
+kubectl apply -f coderprabhu-storage-class-hdd.yaml
+kubectl get storageclass
+kubectl get storageclass coderprabhu-storage-class-hdd
+kubectl get storageclass standard
+kubectl describe storageclass coderprabhu-storage-class-hdd
+kubectl describe storageclass standard
+kubectl delete statefulset mongo
+kubectl delete svc mongo
+kubectl delete pvc -l role=mongo
+gcloud container clusters delete "hello-world"
+kubectl apply -f coderprabhu-mongo-headlessservice.yaml
+kubectl get service mongo
+kubectl describe service mongo
+kubectl apply -f coderprabhu-mongo-statefulset.yaml
+kubectl delete -f coderprabhu-mongo-statefulset.yaml
+kubectl get statefulset
+kubectl get statefulset mongo
+kubectl describe statefulset mongo
+kubectl exec -ti mongo-0 mongo
+rs.conf()
+```
 Additional commands:  
 ```
+kubectl apply -f coderprabhu-cluster-role-binding.yaml
 gcloud container clusters create coderprabhu-cluster    
 gcloud compute addresses create coderprabhu-ip --global  
 gcloud compute addresses describe coderprabhu-ip --global

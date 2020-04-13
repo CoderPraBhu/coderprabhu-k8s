@@ -1,0 +1,61 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  serviceName: "mongo"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        role: mongo
+        environment: prod
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mongo
+          image: mongo
+          command:
+            - mongod
+            - "--replSet"
+            - rs0
+#            - "--smallfiles" not supported in mongo 4.2 and above
+#            - "--noprealloc"
+# https://github.com/thesandlord/mongo-k8s-sidecar/pull/3/files
+            - "--bind_ip_all"
+#            - "--bind_ip"
+#            - "0.0.0.0"
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-persistent-storage
+              mountPath: /data/db
+          resources:
+            requests:
+              cpu: "0.01"
+              memory: "24Mi"
+            limits:
+              cpu: "0.2"  
+              memory: "128Mi"               
+        - name: mongo-sidecar
+          image: cvallance/mongo-k8s-sidecar
+          env:
+            - name: MONGO_SIDECAR_POD_LABELS
+              value: "role=mongo,environment=prod"
+          resources:
+            requests:
+              cpu: "0.01"
+              memory: "24Mi"
+            limits:
+              cpu: "0.2"  
+              memory: "128Mi" 
+  volumeClaimTemplates:
+  - metadata:
+      name: mongo-persistent-storage
+      annotations:
+        volume.beta.kubernetes.io/storage-class: "coderprabhu-storage-class-hdd"
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
