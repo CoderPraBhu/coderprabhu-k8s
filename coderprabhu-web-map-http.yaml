@@ -1,0 +1,10 @@
+kind: compute#urlMap
+name: coderprabhu-web-map-http
+defaultUrlRedirect:
+   redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
+   httpsRedirect: True
+#https://cloud.google.com/load-balancing/docs/https/traffic-management#response-codes
+#https://cloud.google.com/load-balancing/docs/https/setting-up-traffic-management#gcloud   
+#gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global
+#gcloud compute url-maps describe coderprabhu-web-map-http
+#https://github.com/kubernetes/ingress-gce/issues/1075

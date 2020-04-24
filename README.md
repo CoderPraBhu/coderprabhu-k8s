@@ -70,12 +70,32 @@ kubectl describe statefulset mongo
 kubectl exec -ti mongo-0 mongo
 rs.conf()
 ```
+HTTPS redirection:
+gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global  
+gcloud compute url-maps describe coderprabhu-web-map-http
+gcloud compute target-http-proxies list
+k8s-tp-default-coderprabhu-ingress--de7ff4b20a1828c3  k8s-um-default-coderprabhu-ingress--de7ff4b20a1828c3
+gcloud compute target-http-proxies describe k8s-tp-default-coderprabhu-ingress--de7ff4b20a1828c3
+gcloud compute url-maps describe k8s-um-default-coderprabhu-ingress--de7ff4b20a1828c3
+gcloud compute target-http-proxies create coderprabhu-http-lb-proxy --url-map=coderprabhu-web-map-http --global
+gcloud compute target-http-proxies update coderprabhu-http-lb-proxy --url-map=coderprabhu-web-map-http --global   
+gcloud compute forwarding-rules list 
+gcloud compute forwarding-rules describe k8s-fw-default-coderprabhu-ingress--de7ff4b20a1828c3
+gcloud compute forwarding-rules describe k8s-fws-default-coderprabhu-ingress--de7ff4b20a1828c3
+
+gcloud compute forwarding-rules create http-content-rule --address=coderprabhu-ip --global --target-http-proxy=coderprabhu-http-lb-proxy --ports=80
+
+
+
+```
+```
 Additional commands:  
 ```
 kubectl apply -f coderprabhu-cluster-role-binding.yaml
 gcloud container clusters create coderprabhu-cluster    
 gcloud compute addresses create coderprabhu-ip --global  
 gcloud compute addresses describe coderprabhu-ip --global
+gcloud compute addresses describe coderprabhu-ip --format="get(address)" --global
 kubectl get ingress
 kubectl describe ingress coderprabhu-ingress
 kubectl get ingress coderprabhu-ingress --output yaml
