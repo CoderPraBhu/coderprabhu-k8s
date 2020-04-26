@@ -11,6 +11,10 @@ To create required google managed certs, execute
 kubectl apply -f coderprabhu-ui-dot-com-cert.yaml  
 kubectl apply -f coderprabhu-api-dot-com-cert.yaml  
 kubectl apply -f coderprabhu-www-dot-com-cert.yaml  
+https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs
+https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs
+gcloud beta compute ssl-certificates list --global
+https://cloud.google.com/load-balancing/docs/quotas#ssl_certificates
 ````
 To remove all k8s objects, execute
 ````
