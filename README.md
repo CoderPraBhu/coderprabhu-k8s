@@ -71,23 +71,27 @@ kubectl exec -ti mongo-0 mongo
 rs.conf()
 ```
 HTTPS redirection:
-gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global  
+```
+==> gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global  
 gcloud compute url-maps describe coderprabhu-web-map-http
 gcloud compute target-http-proxies list
-k8s-tp-default-coderprabhu-ingress--de7ff4b20a1828c3  k8s-um-default-coderprabhu-ingress--de7ff4b20a1828c3
+   k8s-tp-default-coderprabhu-ingress--de7ff4b20a1828c3  k8s-um-default-coderprabhu-ingress--de7ff4b20a1828c3
 gcloud compute target-http-proxies describe k8s-tp-default-coderprabhu-ingress--de7ff4b20a1828c3
 gcloud compute url-maps describe k8s-um-default-coderprabhu-ingress--de7ff4b20a1828c3
-gcloud compute target-http-proxies create coderprabhu-http-lb-proxy --url-map=coderprabhu-web-map-http --global
+==> gcloud compute target-http-proxies create coderprabhu-http-lb-proxy --url-map=coderprabhu-web-map-http --global
 gcloud compute target-http-proxies update coderprabhu-http-lb-proxy --url-map=coderprabhu-web-map-http --global   
+gcloud compute target-http-proxies describe coderprabhu-http-lb-proxy
 gcloud compute forwarding-rules list 
-gcloud compute forwarding-rules describe k8s-fw-default-coderprabhu-ingress--de7ff4b20a1828c3
-gcloud compute forwarding-rules describe k8s-fws-default-coderprabhu-ingress--de7ff4b20a1828c3
+gcloud compute forwarding-rules describe k8s-fw-default-coderprabhu-ingress--de7ff4b20a1828c3 --global
+gcloud compute forwarding-rules describe k8s-fws-default-coderprabhu-ingress--de7ff4b20a1828c3 --global
+gcloud compute forwarding-rules describe coderprabhu-http-content-rule --global 
+gcloud compute forwarding-rules create coderprabhu-http-content-rule --address=coderprabhu-ip --global --target-http-proxy=coderprabhu-http-lb-proxy --ports=80
+gcloud compute forwarding-rules update k8s-fw-default-coderprabhu-ingress--de7ff4b20a1828c3  --target=k8s-tp-default-coderprabhu-ingress--de7ff4b20a1828c3
 
-gcloud compute forwarding-rules create http-content-rule --address=coderprabhu-ip --global --target-http-proxy=coderprabhu-http-lb-proxy --ports=80
+==> No such command exists. SO modified rule from Gcloud console
+gcloud compute forwarding-rules update k8s-fw-default-coderprabhu-ingress--de7ff4b20a1828c3  --target=coderprabhu-http-lb-proxy
 
 
-
-```
 ```
 Additional commands:  
 ```
