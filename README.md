@@ -4,38 +4,20 @@ Git Repo for UI: https://github.com/CoderPraBhu/coderprabhu-ui
 Git Repo for API: https://github.com/CoderPraBhu/coderprabhu-api  
 This Repo for K8S: https://github.com/CoderPraBhu/coderprabhu-k8s  
 
-Commands:  
+## Commands:  
 
-To create required google managed certs, execute
-````
-kubectl apply -f coderprabhu-ui-dot-com-cert.yaml  
-kubectl apply -f coderprabhu-api-dot-com-cert.yaml  
-kubectl apply -f coderprabhu-www-dot-com-cert.yaml  
-https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs
-https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs
-gcloud beta compute ssl-certificates list --global
-https://cloud.google.com/load-balancing/docs/quotas#ssl_certificates
-````
-To remove all k8s objects, execute
-````
-kubectl delete -f coderprabhu-ingress.yaml 
-kubectl delete -f coderprabhu-api-backend-service.yaml  
-kubectl delete -f coderprabhu-ui-backend-service.yaml  
-kubectl delete -f coderprabhu-api-deployment.yaml  
-kubectl delete -f coderprabhu-ui-deployment.yaml  
-````
 When code is updated update the ui and api deployment yaml with new 
 container image versions.
 To create or update the k8s deployment
-````
+```
 kubectl apply -f coderprabhu-api-deployment.yaml  
 kubectl apply -f coderprabhu-ui-deployment.yaml  
 kubectl apply -f coderprabhu-api-backend-service.yaml  
 kubectl apply -f coderprabhu-ui-backend-service.yaml  
 kubectl apply -f coderprabhu-ingress.yaml 
-````
-Curl commands:   
-````
+```
+# Curl commands:   
+```
 curl http://coderprabhu.com
 curl https://coderprabhu.com
 curl http://www.coderprabhu.com
@@ -48,11 +30,28 @@ curl http://api.coderprabhu.com/count
 curl https://api.coderprabhu.com/count
 curl https://api.coderprabhu.com/actuator/info
 curl https://api.coderprabhu.com/actuator/health
-````   
-Storage:  
+```   
+# Google Managed Certs:
+https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs
+https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs
+https://cloud.google.com/load-balancing/docs/quotas#ssl_certificates
 ```
+kubectl apply -f coderprabhu-ui-dot-com-cert.yaml  
+kubectl apply -f coderprabhu-api-dot-com-cert.yaml  
+kubectl apply -f coderprabhu-www-dot-com-cert.yaml
+gcloud beta compute ssl-certificates list --global  
+```
+# Remove k8s objects
+```
+kubectl delete -f coderprabhu-ingress.yaml 
+kubectl delete -f coderprabhu-api-backend-service.yaml  
+kubectl delete -f coderprabhu-ui-backend-service.yaml  
+kubectl delete -f coderprabhu-api-deployment.yaml  
+kubectl delete -f coderprabhu-ui-deployment.yaml  
+```
+# Storage:  
 https://kubernetes.io/blog/2017/01/running-mongodb-on-kubernetes-with-statefulsets/
-
+```
 kubectl apply -f coderprabhu-storage-class-hdd.yaml
 kubectl get storageclass
 kubectl get storageclass coderprabhu-storage-class-hdd
@@ -74,7 +73,8 @@ kubectl describe statefulset mongo
 kubectl exec -ti mongo-0 mongo
 rs.conf()
 ```
-HTTPS redirection: Wait for fix from GKE: https://github.com/kubernetes/ingress-gce/issues/1075
+# HTTPS redirection: *In Progress* 
+Wait for fix from GKE: https://github.com/kubernetes/ingress-gce/issues/1075
 ```
 ==> gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global  
 gcloud compute url-maps describe coderprabhu-web-map-http
@@ -91,13 +91,10 @@ gcloud compute forwarding-rules describe k8s-fws-default-coderprabhu-ingress--de
 gcloud compute forwarding-rules describe coderprabhu-http-content-rule --global 
 gcloud compute forwarding-rules create coderprabhu-http-content-rule --address=coderprabhu-ip --global --target-http-proxy=coderprabhu-http-lb-proxy --ports=80
 gcloud compute forwarding-rules update k8s-fw-default-coderprabhu-ingress--de7ff4b20a1828c3  --target=k8s-tp-default-coderprabhu-ingress--de7ff4b20a1828c3
-
-==> No such command exists. SO modified rule from Gcloud console
+==> No such command exists. So modified rule from Gcloud console
 gcloud compute forwarding-rules update k8s-fw-default-coderprabhu-ingress--de7ff4b20a1828c3  --target=coderprabhu-http-lb-proxy
-
-
 ```
-Additional commands:  
+#Additional commands:  
 ```
 kubectl apply -f coderprabhu-cluster-role-binding.yaml
 gcloud container clusters create coderprabhu-cluster    
