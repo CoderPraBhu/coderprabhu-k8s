@@ -4,7 +4,7 @@ Git Repo for UI: https://github.com/CoderPraBhu/coderprabhu-ui
 Git Repo for API: https://github.com/CoderPraBhu/coderprabhu-api  
 This Repo for K8S: https://github.com/CoderPraBhu/coderprabhu-k8s  
 
-## Commands:  
+# Commands:  
 
 When code is updated update the ui and api deployment yaml with new 
 container image versions.
@@ -32,9 +32,9 @@ curl https://api.coderprabhu.com/actuator/info
 curl https://api.coderprabhu.com/actuator/health
 ```   
 # Google Managed Certs:
-https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs
-https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs
-https://cloud.google.com/load-balancing/docs/quotas#ssl_certificates
+https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs  
+https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs  
+https://cloud.google.com/load-balancing/docs/quotas#ssl_certificates  
 ```
 kubectl apply -f coderprabhu-ui-dot-com-cert.yaml  
 kubectl apply -f coderprabhu-api-dot-com-cert.yaml  
@@ -73,7 +73,7 @@ kubectl describe statefulset mongo
 kubectl exec -ti mongo-0 mongo
 rs.conf()
 ```
-# HTTPS redirection: *In Progress* 
+# HTTPS redirection: ### *In Progress* 
 Wait for fix from GKE: https://github.com/kubernetes/ingress-gce/issues/1075
 ```
 ==> gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global  
@@ -94,7 +94,7 @@ gcloud compute forwarding-rules update k8s-fw-default-coderprabhu-ingress--de7ff
 ==> No such command exists. So modified rule from Gcloud console
 gcloud compute forwarding-rules update k8s-fw-default-coderprabhu-ingress--de7ff4b20a1828c3  --target=coderprabhu-http-lb-proxy
 ```
-#Additional commands:  
+# Additional commands:  
 ```
 kubectl apply -f coderprabhu-cluster-role-binding.yaml
 gcloud container clusters create coderprabhu-cluster    
