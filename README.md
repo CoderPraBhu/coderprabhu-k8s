@@ -73,7 +73,7 @@ kubectl describe statefulset mongo
 kubectl exec -ti mongo-0 mongo
 rs.conf()
 ```
-# HTTPS redirection: ### *In Progress* 
+# HTTPS redirection: *In Progress* 
 Wait for fix from GKE: https://github.com/kubernetes/ingress-gce/issues/1075
 ```
 ==> gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global  
