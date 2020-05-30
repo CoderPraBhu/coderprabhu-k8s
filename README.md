@@ -16,6 +16,7 @@ kubectl apply -f coderprabhu-api-backend-service.yaml
 kubectl apply -f coderprabhu-ui-backend-service.yaml  
 kubectl apply -f coderprabhu-ingress.yaml 
 ```
+https://cloud.google.com/kubernetes-engine/docs/how-to/stateless-apps
 # Curl commands:   
 ```
 curl http://coderprabhu.com
@@ -51,6 +52,9 @@ kubectl delete -f coderprabhu-ui-deployment.yaml
 ```
 # Storage:  
 https://kubernetes.io/blog/2017/01/running-mongodb-on-kubernetes-with-statefulsets/
+https://cloud.google.com/kubernetes-engine/docs/concepts/persistent-volumes
+https://cloud.google.com/kubernetes-engine/docs/concepts/statefulset
+https://cloud.google.com/kubernetes-engine/docs/how-to/stateful-apps
 ```
 kubectl apply -f coderprabhu-storage-class-hdd.yaml
 kubectl get storageclass
@@ -61,16 +65,31 @@ kubectl describe storageclass standard
 kubectl delete statefulset mongo
 kubectl delete svc mongo
 kubectl delete pvc -l role=mongo
+Note: To help prevent data loss, PersistentVolumes and PersistentVolumeClaims are not deleted when a StatefulSet is deleted. You must manually delete these objects using kubectl delete pv and kubectl delete pvc.
 gcloud container clusters delete "hello-world"
 kubectl apply -f coderprabhu-mongo-headlessservice.yaml
 kubectl get service mongo
 kubectl describe service mongo
 kubectl apply -f coderprabhu-mongo-statefulset.yaml
+kubectl rollout history statefulset mongo
 kubectl delete -f coderprabhu-mongo-statefulset.yaml
 kubectl get statefulset
 kubectl get statefulset mongo
 kubectl describe statefulset mongo
+kubectl get pv
+kubectl describe pv pvc-1d3300d2-7d24-11ea-bcdc-42010a8a0158
+kubectl describe pv pvc-3ce3fb0b-7d19-11ea-bcdc-42010a8a0158
+kubectl get pvc
+kubectl describe pv 
+kubectl describe pvc mongo-persistent-storage-mongo-0
+kubectl describe pvc mongo-persistent-storage-mongo-1
 kubectl exec -ti mongo-0 mongo
+kubectl exec -it mongo-0 -c mongo -- /bin/bash
+kubectl exec -it mongo-0 -c mongo -- ls -la /data/db
+kubectl exec -it mongo-0 -c mongo -- ls -la /data/db
+kubectl exec mongo-0 -c mongo -i -t -- bash -
+kubectl exec mongo-0 -c mongo -i -t -- ls -t /usr
+kubectl exec mongo-0 -c mongo -i -t -- mongo
 rs.conf()
 ```
 # HTTPS redirection: *In Progress* 
@@ -98,6 +117,7 @@ gcloud compute forwarding-rules update k8s-fw-default-coderprabhu-ingress--de7ff
 ```
 kubectl apply -f coderprabhu-cluster-role-binding.yaml
 gcloud container clusters create coderprabhu-cluster    
+gcloud container clusters get-credentials coderprabhu-cluster
 gcloud compute addresses create coderprabhu-ip --global  
 gcloud compute addresses describe coderprabhu-ip --global
 gcloud compute addresses describe coderprabhu-ip --format="get(address)" --global

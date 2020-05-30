@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: coderprabhu-api-app
+  name: coderprabhu-jamon-app
   labels:
-    app: coderprabhu-api
+    app: coderprabhu-jamon
 spec:
   selector:
     matchLabels:
-      app: coderprabhu-api
-      tier: api
+      app: coderprabhu-jamon
+      tier: jamon
   template:
     metadata:
       labels:
-        app: coderprabhu-api
-        tier: api
+        app: coderprabhu-jamon
+        tier: jamon
     spec:
       containers:
-      - name: coderprabhu-api-app
-        image: gcr.io/kubegcp-256806/coderprabhu-api:v4
+      - name: coderprabhu-jamon-app
+        image: gcr.io/kubegcp-256806/jamon:v1
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
         resources:
           requests:
-            cpu: "0.05"
+            cpu: "0.02"
             memory: "64Mi"
           limits:
             cpu: "0.3"  
