@@ -1,10 +1,13 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongo
 spec:
   serviceName: "mongo"
   replicas: 1
+  selector:
+    matchLabels:
+      role: mongo
   template:
     metadata:
       labels:
@@ -36,7 +39,7 @@ spec:
               memory: "24Mi"
             limits:
               cpu: "0.2"  
-              memory: "128Mi"               
+              memory: "100Mi"               
         - name: mongo-sidecar
           image: cvallance/mongo-k8s-sidecar
           env:
@@ -48,7 +51,7 @@ spec:
               memory: "24Mi"
             limits:
               cpu: "0.2"  
-              memory: "128Mi" 
+              memory: "60Mi" 
   volumeClaimTemplates:
   - metadata:
       name: mongo-persistent-storage

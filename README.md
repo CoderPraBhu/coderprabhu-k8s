@@ -138,4 +138,5 @@ gcloud compute target-https-proxies list
 gcloud compute target-http-proxies describe k8s-tp-default-coderprabhu-ingress--de7ff4b20a1828c3
 gcloud compute url-maps list
 gcloud compute url-maps describe k8s-um-default-coderprabhu-ingress--de7ff4b20a1828c3
+kubectl scale deployment coderprabhu-api-app --replicas=0 
 ```
