@@ -145,7 +145,8 @@ kubectl scale deployment coderprabhu-api-app --replicas=0
 https://cloud.google.com/kubernetes-engine/docs/tutorials/migrating-node-pool
 ```
 gcloud container node-pools list --cluster coderprabhu-cluster
-gcloud container node-pools create coderprabhu-e2-small-pool --cluster=coderprabhu-cluster --machine-type=e2-small --num-nodes=1
+gcloud container node-pools create coderprabhu-e2-small-pool 
+--cluster=coderprabhu-cluster --machine-type=e2-small --num-nodes=1
 kubectl get nodes
 kubectl get pods -o=wide
 kubectl get nodes -l cloud.google.com/gke-nodepool=coderprabhu-g1-small-pool
@@ -153,5 +154,15 @@ kubectl cordon gke-coderprabhu-clus-coderprabhu-g1-s-9fee5f72-0c0d
 kubectl get nodes => scheduling disabled 
 kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 gke-coderprabhu-clus-coderprabhu-g1-s-9fee5f72-0c0d
 gcloud container node-pools delete coderprabhu-g1-small-pool --cluster coderprabhu-cluster
+
+
+gcloud container node-pools create coderprabhu-e2-medium-pool --cluster=coderprabhu-cluster --machine-type=e2-medium --num-nodes=1
+kubectl get nodes
+kubectl get pods -o=wide
+kubectl get nodes -l cloud.google.com/gke-nodepool=coderprabhu-e2-small-pool 
+kubectl cordon gke-coderprabhu-clus-coderprabhu-e2-s-b112d31a-x845
+kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 gke-coderprabhu-clus-coderprabhu-e2-s-b112d31a-x845
+gcloud container node-pools delete coderprabhu-e2-small-pool --cluster coderprabhu-cluster
+
 
 ```
