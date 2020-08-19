@@ -11,8 +11,9 @@ mongo
 show databases 
 use CoderPraBhuApi
 show collections
-db.visitor.remove({ip: "73.70.114.196"})
 db.visitor.find()
+db.visitor.remove({ip: "73.70.114.196"})
+
 ```
 
 Install Mongo DB on local

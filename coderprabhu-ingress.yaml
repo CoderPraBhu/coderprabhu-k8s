@@ -4,7 +4,7 @@ metadata:
   name: coderprabhu-ingress
   annotations:
     kubernetes.io/ingress.global-static-ip-name: coderprabhu-ip
-    networking.gke.io/managed-certificates: "coderprabhudotcommanagedcert,coderprabhuapidotcommanagedcert,coderprabhuwwwdotcommanagedcert,campcoderprabhudotcommanagedcert,campapicoderprabhudotcommanagedcert,menucoderprabhudotcommanagedcert,whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert,tornacampsitesdotcommanagedcert,wwwtornacampsitesdotcommanagedcert,apitornacampsitesdotcommanagedcert"
+    networking.gke.io/managed-certificates: "coderprabhudotcommanagedcert,coderprabhuapidotcommanagedcert,coderprabhuwwwdotcommanagedcert,campcoderprabhudotcommanagedcert,campapicoderprabhudotcommanagedcert,menucoderprabhudotcommanagedcert,whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert,tornacampsitesdotcommanagedcert,wwwtornacampsitesdotcommanagedcert,apitornacampsitesdotcommanagedcert,newtornacampsitesdotcommanagedcert"
    # ingress.kubernetes.io/target-proxy: coderprabhu-http-lb-proxy
   labels:
     app: coderprabhu-ui
@@ -94,3 +94,10 @@ spec:
           backend:
             serviceName: menu-api-backend
             servicePort: httpapiport                        
+  - host: new.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: new-camp-ui-backend
+            servicePort: httpuiport    
