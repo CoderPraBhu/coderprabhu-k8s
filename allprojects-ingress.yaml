@@ -1,0 +1,32 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: allprojects-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: allprojects-ip
+    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert"
+  labels:
+    app: allprojects
+spec:
+  rules:          
+  - host: whatsgoodonmenu.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: menu-ui-backend
+            servicePort: httpuiport            
+  - host: www.whatsgoodonmenu.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: menu-ui-backend
+            servicePort: httpuiport                        
+  - host: api.whatsgoodonmenu.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: menu-api-backend
+            servicePort: httpapiport                         

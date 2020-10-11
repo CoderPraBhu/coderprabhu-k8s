@@ -91,6 +91,14 @@ kubectl exec mongo-0 -c mongo -i -t -- bash -
 kubectl exec mongo-0 -c mongo -i -t -- ls -t /usr
 kubectl exec mongo-0 -c mongo -i -t -- mongo
 rs.conf()
+rs.status()
+rs.isMaster()
+rs.slaveOk()
+rs.secondaryOk()
+Note: rs.initiate() on the node otherwise you will get following error: 
+        "errmsg" : "node is not in primary or recovering state",
+        "code" : 13436,
+
 ```
 # HTTPS redirection: *In Progress* 
 Wait for fix from GKE: https://github.com/kubernetes/ingress-gce/issues/1075
@@ -165,4 +173,83 @@ kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 
 gcloud container node-pools delete coderprabhu-e2-small-pool --cluster coderprabhu-cluster
 
 
+```
+
+
+## Clean Slate:
+```
+Check authentication: 
+gcloud auth list
+
+
+To set the active account, run:
+
+Switch to new account: 
+gcloud config set account sanskruti2489@gmail.com
+gcloud config set project all-projects-292200
+gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
+
+Switch to old account: 
+gcloud config set account skolpe@mail.ccsf.edu
+gcloud config set project kubegcp-256806
+gcloud container clusters get-credentials coderprabhu-cluster --zone us-west1-b
+
+gcloud auth login
+
+To show current config/references:
+gcloud config list
+
+gcloud container clusters list
+
+gcloud container clusters create allprojects-cluster
+gcloud container clusters get-credentials allprojects-cluster
+
+gcloud compute addresses create allprojects-ip --global  
+gcloud compute addresses describe allprojects-ip --global       old=35.201.92.92    new=34.98.91.174 
+gcloud compute addresses describe allprojects-ip --format="get(address)" --global
+
+gcloud auth configure-docker
+
+kubectl apply -f allprojects-ingress.yaml 
+kubectl get ingress
+kubectl describe ingress allprojects-ingress
+
+kubectl apply -f allprojects-storage-class-hdd.yaml
+kubectl get storageclass
+kubectl get storageclass allprojects-storage-class-hdd
+kubectl get storageclass standard
+kubectl describe storageclass allprojects-storage-class-hdd
+kubectl describe storageclass standard
+kubectl delete statefulset mongo
+kubectl delete svc mongo
+kubectl delete pvc -l role=mongo
+Note: To help prevent data loss, PersistentVolumes and PersistentVolumeClaims are not deleted when a StatefulSet is deleted. You must manually delete these objects using kubectl delete pv and kubectl delete pvc.
+gcloud container clusters delete "hello-world"
+kubectl apply -f allprojects-mongo-headlessservice.yaml
+kubectl get service mongo
+kubectl describe service mongo
+kubectl apply -f allprojects-mongo-statefulset.yaml
+kubectl rollout history statefulset mongo
+kubectl delete -f allprojects-mongo-statefulset.yaml
+kubectl get statefulset
+kubectl get statefulset mongo
+kubectl describe statefulset mongo
+kubectl exec -it mongo-0 -c mongo -- /bin/bash
+```
+# Backup and restore: 
+```
+Log in to container and run: 
+mongodump 
+
+Logout and copy the files from default dump folder to a local folder 
+kubectl cp mongo-0:dump /Users/Sanskruti/react/mongobkp
+
+Change to target cluster: 
+
+kubectl cp /Users/Sanskruti/react/mongobkp mongo-0:dumpfrom 
+cd to the folder 
+cd dumpfrom 
+mongorestore -d MenuApi /dumpfrom/mongobkp/MenuApi 
+mongorestore -d CoderPraBhuApi /dumpfrom/mongobkp/CoderPraBhuApi 
+mongorestore -d campdb /dumpfrom/mongobkp/campdb 
 ```
