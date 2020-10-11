@@ -4,7 +4,7 @@ metadata:
   name: allprojects-ingress
   annotations:
     kubernetes.io/ingress.global-static-ip-name: allprojects-ip
-    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert"
+    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert, newtornacampsitesdotcommanagedcert, tornacampsitesdotcommanagedcert, wwwtornacampsitesdotcommanagedcert, apitornacampsitesdotcommanagedcert, coderprabhudotcommanagedcert, coderprabhuwwwdotcommanagedcert, coderprabhuapidotcommanagedcert"
   labels:
     app: allprojects
 spec:
@@ -30,3 +30,52 @@ spec:
           backend:
             serviceName: menu-api-backend
             servicePort: httpapiport                         
+  - host: new.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: new-camp-ui-backend
+            servicePort: httpuiport 
+  - host: www.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: camp-ui-backend
+            servicePort: httpuiport    
+  - host: tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: camp-ui-backend
+            servicePort: httpuiport  
+  - host: api.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: camp-api-backend
+            servicePort: httpapiport      
+  - host: www.coderprabhu.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: coderprabhu-ui-backend
+            servicePort: httpuiport
+  - host: coderprabhu.com
+    http:
+      paths: 
+        - path: /*      
+          backend:
+            serviceName: coderprabhu-ui-backend
+            servicePort: httpuiport
+  - host: api.coderprabhu.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: coderprabhu-api-backend
+            servicePort: httpapiport            
