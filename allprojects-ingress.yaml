@@ -85,4 +85,4 @@ spec:
         - path: /*
           backend:
             serviceName: camp-newapi-backend
-            servicePort: httpuiport          
+            servicePort: httpapiport          
