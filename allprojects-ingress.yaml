@@ -4,7 +4,7 @@ metadata:
   name: allprojects-ingress
   annotations:
     kubernetes.io/ingress.global-static-ip-name: allprojects-ip
-    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert, newtornacampsitesdotcommanagedcert, tornacampsitesdotcommanagedcert, wwwtornacampsitesdotcommanagedcert, apitornacampsitesdotcommanagedcert, coderprabhudotcommanagedcert, coderprabhuwwwdotcommanagedcert, coderprabhuapidotcommanagedcert"
+    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert, newtornacampsitesdotcommanagedcert, tornacampsitesdotcommanagedcert, wwwtornacampsitesdotcommanagedcert, apitornacampsitesdotcommanagedcert, coderprabhudotcommanagedcert, coderprabhuwwwdotcommanagedcert, coderprabhuapidotcommanagedcert, newapitornacampsitesdotcommanagedcert"
   labels:
     app: allprojects
 spec:
@@ -78,4 +78,11 @@ spec:
         - path: /*
           backend:
             serviceName: coderprabhu-api-backend
-            servicePort: httpapiport            
+            servicePort: httpapiport  
+  - host: newapi.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: camp-newapi-backend
+            servicePort: httpuiport          

@@ -173,6 +173,25 @@ kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 
 gcloud container node-pools delete coderprabhu-e2-small-pool --cluster coderprabhu-cluster
 
 
+gcloud container node-pools list --cluster allprojects-cluster
+kubectl get nodes
+gcloud container node-pools create allprojects-e2-medium-pool --cluster=allprojects-cluster --machine-type=e2-medium --num-nodes=1
+kubectl get nodes -l cloud.google.com/gke-nodepool=allprojects-e2-medium-pool
+
+kubectl cordon gke-allprojects-cluster-default-pool-fd4d2849-chlg
+kubectl cordon gke-allprojects-cluster-default-pool-fd4d2849-p3p7
+kubectl cordon gke-allprojects-cluster-default-pool-fd4d2849-v2cb
+
+gke-allprojects-cluster-default-pool-fd4d2849-chlg   Ready    <none>   7d23h   v1.16.13-gke.401
+gke-allprojects-cluster-default-pool-fd4d2849-p3p7   Ready    <none>   7d23h   v1.16.13-gke.401
+gke-allprojects-cluster-default-pool-fd4d2849-v2cb   Ready    <none>   7d23h   v1.16.13-gke.401
+
+kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 gke-allprojects-cluster-default-pool-fd4d2849-chlg 
+kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 gke-allprojects-cluster-default-pool-fd4d2849-p3p7
+kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 gke-allprojects-cluster-default-pool-fd4d2849-v2cb 
+
+gcloud container node-pools delete default-pool --cluster allprojects-cluster
+
 ```
 
 
