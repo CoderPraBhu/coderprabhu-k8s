@@ -102,7 +102,13 @@ Note: rs.initiate() on the node otherwise you will get following error:
 ```
 # HTTPS redirection: *In Progress* 
 Wait for fix from GKE: https://github.com/kubernetes/ingress-gce/issues/1075
+
+https://github.com/GoogleCloudPlatform/gke-networking-recipes/blob/master/ingress/secure-ingress/secure-ingress.yaml
 ```
+
+gcloud compute ssl-policies create allprojects-ingress-ssl-policy  --profile MODERN --min-tls-version 1.2
+kubectl apply -f allprojects-ingress-security-config.yaml
+
 ==> gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global  
 gcloud compute url-maps describe coderprabhu-web-map-http
 gcloud compute target-http-proxies list
@@ -254,6 +260,7 @@ kubectl get statefulset
 kubectl get statefulset mongo
 kubectl describe statefulset mongo
 kubectl exec -it mongo-0 -c mongo -- /bin/bash
+
 ```
 # Backup and restore: 
 ```
@@ -272,3 +279,4 @@ mongorestore -d MenuApi /dumpfrom/mongobkp/MenuApi
 mongorestore -d CoderPraBhuApi /dumpfrom/mongobkp/CoderPraBhuApi 
 mongorestore -d campdb /dumpfrom/mongobkp/campdb 
 ```
+
