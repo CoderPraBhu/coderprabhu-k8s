@@ -194,6 +194,8 @@ gcloud config set account skolpe@mail.ccsf.edu
 gcloud config set project kubegcp-256806
 gcloud container clusters get-credentials coderprabhu-cluster --zone us-west1-b
 
+gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b	 --project all-projects-292200	
+
 gcloud auth login
 
 To show current config/references:
@@ -253,3 +255,4 @@ mongorestore -d MenuApi /dumpfrom/mongobkp/MenuApi
 mongorestore -d CoderPraBhuApi /dumpfrom/mongobkp/CoderPraBhuApi 
 mongorestore -d campdb /dumpfrom/mongobkp/campdb 
 ```
+
