@@ -108,6 +108,8 @@ https://github.com/GoogleCloudPlatform/gke-networking-recipes/blob/master/ingres
 
 gcloud compute ssl-policies create allprojects-ingress-ssl-policy  --profile MODERN --min-tls-version 1.2
 kubectl apply -f allprojects-ingress-security-config.yaml
+kubectl get -f allprojects-ingress-security-config.yaml
+kubectl describe -f allprojects-ingress-security-config.yaml
 
 ==> gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global  
 gcloud compute url-maps describe coderprabhu-web-map-http

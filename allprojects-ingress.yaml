@@ -4,7 +4,7 @@ metadata:
   name: allprojects-ingress
   annotations:
     kubernetes.io/ingress.global-static-ip-name: allprojects-ip
-    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert, newtornacampsitesdotcommanagedcert, tornacampsitesdotcommanagedcert, wwwtornacampsitesdotcommanagedcert, apitornacampsitesdotcommanagedcert, coderprabhudotcommanagedcert, coderprabhuwwwdotcommanagedcert, coderprabhuapidotcommanagedcert, newapitornacampsitesdotcommanagedcert"
+    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert, newtornacampsitesdotcommanagedcert, tornacampsitesdotcommanagedcert, wwwtornacampsitesdotcommanagedcert, apitornacampsitesdotcommanagedcert, coderprabhudotcommanagedcert, coderprabhuwwwdotcommanagedcert, coderprabhuapidotcommanagedcert, newapitornacampsitesdotcommanagedcert, oldtornacampsitesdotcommanagedcert, oldapitornacampsitesdotcommanagedcert"
     networking.gke.io/v1beta1.FrontendConfig: allprojects-ingress-security-config
   labels:
     app: allprojects
@@ -43,15 +43,22 @@ spec:
       paths:
         - path: /*
           backend:
-            serviceName: camp-ui-backend
+            serviceName: new-camp-ui-backend
             servicePort: httpuiport    
   - host: tornacampsites.com
     http:
       paths:
         - path: /*
           backend:
-            serviceName: camp-ui-backend
+            serviceName: new-camp-ui-backend
             servicePort: httpuiport  
+  - host: old.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: camp-ui-backend
+            servicePort: httpuiport 
   - host: api.tornacampsites.com
     http:
       paths:
@@ -59,6 +66,13 @@ spec:
           backend:
             serviceName: camp-api-backend
             servicePort: httpapiport      
+  - host: oldapi.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          backend:
+            serviceName: camp-api-backend
+            servicePort: httpapiport    
   - host: www.coderprabhu.com
     http:
       paths:
