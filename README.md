@@ -102,7 +102,15 @@ Note: rs.initiate() on the node otherwise you will get following error:
 ```
 # HTTPS redirection: *In Progress* 
 Wait for fix from GKE: https://github.com/kubernetes/ingress-gce/issues/1075
+
+https://github.com/GoogleCloudPlatform/gke-networking-recipes/blob/master/ingress/secure-ingress/secure-ingress.yaml
 ```
+
+gcloud compute ssl-policies create allprojects-ingress-ssl-policy  --profile MODERN --min-tls-version 1.2
+kubectl apply -f allprojects-ingress-security-config.yaml
+kubectl get -f allprojects-ingress-security-config.yaml
+kubectl describe -f allprojects-ingress-security-config.yaml
+
 ==> gcloud compute url-maps import coderprabhu-web-map-http --source coderprabhu-web-map-http.yaml --global  
 gcloud compute url-maps describe coderprabhu-web-map-http
 gcloud compute target-http-proxies list
@@ -173,6 +181,25 @@ kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 
 gcloud container node-pools delete coderprabhu-e2-small-pool --cluster coderprabhu-cluster
 
 
+gcloud container node-pools list --cluster allprojects-cluster
+kubectl get nodes
+gcloud container node-pools create allprojects-e2-medium-pool --cluster=allprojects-cluster --machine-type=e2-medium --num-nodes=1
+kubectl get nodes -l cloud.google.com/gke-nodepool=allprojects-e2-medium-pool
+
+kubectl cordon gke-allprojects-cluster-default-pool-fd4d2849-chlg
+kubectl cordon gke-allprojects-cluster-default-pool-fd4d2849-p3p7
+kubectl cordon gke-allprojects-cluster-default-pool-fd4d2849-v2cb
+
+gke-allprojects-cluster-default-pool-fd4d2849-chlg   Ready    <none>   7d23h   v1.16.13-gke.401
+gke-allprojects-cluster-default-pool-fd4d2849-p3p7   Ready    <none>   7d23h   v1.16.13-gke.401
+gke-allprojects-cluster-default-pool-fd4d2849-v2cb   Ready    <none>   7d23h   v1.16.13-gke.401
+
+kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 gke-allprojects-cluster-default-pool-fd4d2849-chlg 
+kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 gke-allprojects-cluster-default-pool-fd4d2849-p3p7
+kubectl drain --force --ignore-daemonsets --delete-local-data --grace-period=10 gke-allprojects-cluster-default-pool-fd4d2849-v2cb 
+
+gcloud container node-pools delete default-pool --cluster allprojects-cluster
+
 ```
 
 
@@ -237,6 +264,7 @@ kubectl get statefulset
 kubectl get statefulset mongo
 kubectl describe statefulset mongo
 kubectl exec -it mongo-0 -c mongo -- /bin/bash
+
 ```
 # Backup and restore: 
 ```
