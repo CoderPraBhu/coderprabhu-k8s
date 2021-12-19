@@ -51,28 +51,14 @@ spec:
         - path: /*
           backend:
             serviceName: new-camp-ui-backend
-            servicePort: httpuiport  
-  - host: old.tornacampsites.com
-    http:
-      paths:
-        - path: /*
-          backend:
-            serviceName: camp-ui-backend
-            servicePort: httpuiport 
+            servicePort: httpuiport
   - host: api.tornacampsites.com
     http:
       paths:
         - path: /*
           backend:
             serviceName: camp-api-backend
-            servicePort: httpapiport      
-  - host: oldapi.tornacampsites.com
-    http:
-      paths:
-        - path: /*
-          backend:
-            serviceName: camp-api-backend
-            servicePort: httpapiport    
+            servicePort: httpapiport 
   - host: www.coderprabhu.com
     http:
       paths:
