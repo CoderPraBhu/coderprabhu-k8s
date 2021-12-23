@@ -1,7 +1,10 @@
-This repository holds k8s manifests for https://coderprabhu.com
+This repository holds k8s manifests for 
+* https://coderprabhu.com
+* https://tornacampsites.com
+* https://whatsgoodonmenu.com 
 
-Git Repo for UI: https://github.com/CoderPraBhu/coderprabhu-ui  
-Git Repo for API: https://github.com/CoderPraBhu/coderprabhu-api  
+Git Repo for CoderPraBhu.com UI: https://github.com/CoderPraBhu/coderprabhu-ui  
+Git Repo for CoderPraBhu.com API: https://github.com/CoderPraBhu/coderprabhu-api  
 This Repo for K8S: https://github.com/CoderPraBhu/coderprabhu-k8s  
 
 # Commands:  
