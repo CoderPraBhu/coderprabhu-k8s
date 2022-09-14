@@ -17,7 +17,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
         - name: mongo
-          image: mongo
+          image: mongo:4.4.16
           command:
             - mongod
             - "--replSet"
@@ -36,10 +36,10 @@ spec:
           resources:
             requests:
               cpu: "0.01"
-              memory: "50Mi"
+              memory: "100Mi"
             limits:
               cpu: "0.2"  
-              memory: "140Mi"               
+              memory: "280Mi"               
         - name: mongo-sidecar
           image: cvallance/mongo-k8s-sidecar
           env:

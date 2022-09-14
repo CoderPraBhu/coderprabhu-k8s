@@ -287,3 +287,9 @@ mongorestore -d CoderPraBhuApi /dumpfrom/mongobkp/CoderPraBhuApi
 mongorestore -d campdb /dumpfrom/mongobkp/campdb 
 ```
 
+Upgrade a cluster
+```
+
+coderprabhu@PraBhuMBP ~ % gcloud container clusters list
+
+```
