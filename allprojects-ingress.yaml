@@ -1,75 +1,102 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: allprojects-ingress
   annotations:
     kubernetes.io/ingress.global-static-ip-name: allprojects-ip
-    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert,whatsgoodonmenuapimanagedcert,wwwwhatsgoodonmenudotcommanagedcert, tornacampsitesdotcommanagedcert, wwwtornacampsitesdotcommanagedcert, coderprabhudotcommanagedcert, coderprabhuwwwdotcommanagedcert, coderprabhuapidotcommanagedcert, newapitornacampsitesdotcommanagedcert"
+    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert2025,whatsgoodonmenuapimanagedcert2025,wwwwhatsgoodonmenudotcommanagedcert2025, tornacampsitesdotcommanagedcert, wwwtornacampsitesdotcommanagedcert, coderprabhudotcommanagedcert, coderprabhuwwwdotcommanagedcert, coderprabhuapidotcommanagedcert, newapitornacampsitesdotcommanagedcert"
     networking.gke.io/v1beta1.FrontendConfig: allprojects-ingress-security-config
   labels:
     app: allprojects
 spec:
-  rules:          
+  rules:
   - host: whatsgoodonmenu.com
     http:
       paths:
         - path: /*
+          pathType: ImplementationSpecific
           backend:
-            serviceName: menu-ui-backend
-            servicePort: httpuiport            
+            service:
+              name: menu-ui-backend
+              port:
+                name: httpuiport
   - host: www.whatsgoodonmenu.com
     http:
       paths:
         - path: /*
+          pathType: ImplementationSpecific
           backend:
-            serviceName: menu-ui-backend
-            servicePort: httpuiport                        
+            service:
+              name: menu-ui-backend
+              port:
+                name: httpuiport
   - host: api.whatsgoodonmenu.com
     http:
       paths:
         - path: /*
+          pathType: ImplementationSpecific
           backend:
-            serviceName: menu-api-backend
-            servicePort: httpapiport
+            service:
+              name: menu-api-backend
+              port:
+                name: httpapiport
   - host: www.tornacampsites.com
     http:
       paths:
         - path: /*
+          pathType: ImplementationSpecific
           backend:
-            serviceName: new-camp-ui-backend
-            servicePort: httpuiport    
+            service:
+              name: new-camp-ui-backend
+              port:
+                name: httpuiport
   - host: tornacampsites.com
     http:
       paths:
         - path: /*
+          pathType: ImplementationSpecific
           backend:
-            serviceName: new-camp-ui-backend
-            servicePort: httpuiport
+            service:
+              name: new-camp-ui-backend
+              port:
+                name: httpuiport
   - host: www.coderprabhu.com
     http:
       paths:
         - path: /*
+          pathType: ImplementationSpecific
           backend:
-            serviceName: coderprabhu-ui-backend
-            servicePort: httpuiport
+            service:
+              name: coderprabhu-ui-backend
+              port:
+                name: httpuiport
   - host: coderprabhu.com
     http:
-      paths: 
-        - path: /*      
+      paths:
+        - path: /*
+          pathType: ImplementationSpecific
           backend:
-            serviceName: coderprabhu-ui-backend
-            servicePort: httpuiport
+            service:
+              name: coderprabhu-ui-backend
+              port:
+                name: httpuiport
   - host: api.coderprabhu.com
     http:
       paths:
         - path: /*
+          pathType: ImplementationSpecific
           backend:
-            serviceName: coderprabhu-api-backend
-            servicePort: httpapiport  
+            service:
+              name: coderprabhu-api-backend
+              port:
+                name: httpapiport
   - host: newapi.tornacampsites.com
     http:
       paths:
         - path: /*
+          pathType: ImplementationSpecific
           backend:
-            serviceName: camp-newapi-backend
-            servicePort: httpapiport          
+            service:
+              name: camp-newapi-backend
+              port:
+                name: httpapiport

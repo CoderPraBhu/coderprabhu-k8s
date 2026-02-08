@@ -293,3 +293,134 @@ Upgrade a cluster
 coderprabhu@PraBhuMBP ~ % gcloud container clusters list
 
 ```
+
+K8S Dockershim Deprecation 
+https://www.protocol.com/enterprise/kubernetes-dockershim-containers-cri-runtime
+
+
+https://console.cloud.google.com/home/recommendations/view-link/projects/190440084777/locations/us-west1-b/recommenders/google.container.DiagnosisRecommender/recommendations/d4cf3559-f294-42e8-a2a9-61a42b32c935
+
+Following tool does not work with Mac. Needs linux. Commands for reference only 
+```
+https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/
+
+crictl -version
+critest -version
+crictl pods
+crictl pods --name nginx-65899c769f-wv2gp
+crictl pods --label run=nginx
+crictl images
+crictl images nginx
+crictl images -q
+crictl ps -a
+crictl ps
+crictl exec -i -t 1f73f2d81bf98 ls
+crictl logs 87d3992f84f74
+crictl logs --tail=1 87d3992f84f74
+crictl runp pod-config.json
+{
+  "metadata": {
+    "name": "nginx-sandbox",
+    "namespace": "default",
+    "attempt": 1,
+    "uid": "hdishd83djaidwnduwk28bcsb"
+  },
+  "log_directory": "/tmp",
+  "linux": {
+  }
+}
+crictl pull busybox
+Pod config:
+{
+  "metadata": {
+    "name": "busybox-sandbox",
+    "namespace": "default",
+    "attempt": 1,
+    "uid": "aewi4aeThua7ooShohbo1phoj"
+  },
+  "log_directory": "/tmp",
+  "linux": {
+  }
+}
+Container config:
+{
+  "metadata": {
+    "name": "busybox"
+  },
+  "image":{
+    "image": "busybox"
+  },
+  "command": [
+    "top"
+  ],
+  "log_path":"busybox.log",
+  "linux": {
+  }
+}
+crictl create f84dd361f8dc51518ed291fbadd6db537b0496536c1d2d6c05ff943ce8c9a54f container-config.json pod-config.json
+crictl ps -a
+
+```
+
+Install crictl
+
+```
+
+brew install wget
+brew link --overwrite wget
+wget --version
+
+VERSION="v1.26.0"
+wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-darwin-amd64.tar.gz
+
+sudo tar zxvf crictl-$VERSION-darwin-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-$VERSION-darwin-amd64.tar.gz
+```
+Install critest
+```
+VERSION="v1.26.0"
+wget http://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/critest-$VERSION-darwin-amd64.tar.gz
+sudo tar zxvf critest-$VERSION-darwin-amd64.tar.gz -C /usr/local/bin
+rm -f critest-$VERSION-darwin-amd64.tar.gz
+```
+
+https://cloud.google.com/kubernetes-engine/docs/how-to/migrate-containerd
+
+```
+gcloud container clusters upgrade 'allprojects-cluster' --project 'all-projects-292200' --zone 'us-west1-b' --image-type 'COS_CONTAINERD' --node-pool 'allprojects-e2-medium-pool'
+
+coderprabhu@PraBhuMBP gke % ./find-nodepools-to-migrate.sh
+ProjectId:  all-projects-292200
+  Cluster: allprojects-cluster (zone: us-west1-b)
+    Nodepool: allprojects-e2-medium-pool, version: 1.23.15-gke.1400 (1.23), image: COS
+
+       Please update the nodepool to use Containerd.
+       Make sure to consult with the list of known issues https://cloud.google.com/kubernetes-engine/docs/concepts/using-containerd#known_issues.
+       Run the following command to upgrade:
+
+       gcloud container clusters upgrade 'allprojects-cluster' --project 'all-projects-292200' --zone 'us-west1-b' --image-type 'COS_CONTAINERD' --node-pool 'allprojects-e2-medium-pool'
+
+ProjectId:  jamon-coderprabhu
+ProjectId:  avid-elevator-256805
+ProjectId:  angular-theorem-536
+ProjectId:  api-project-1026573300307
+ProjectId:  api-project-52315381992
+
+
+gcloud container node-pools list \
+    --cluster='allprojects-cluster' \
+    --format="table(name,version,config.imageType)"
+
+
+```
+
+https://stackoverflow.com/questions/51946393/kubernetes-pod-warning-1-nodes-had-volume-node-affinity-conflict
+https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/volume-cloning
+https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver#enabling_the_on_an_existing_cluster
+```
+
+gcloud container clusters upgrade 'allprojects-cluster' --project 'all-projects-292200' --zone 'us-west1-b' --image-type 'COS_CONTAINERD' --node-pool 'allprojects-e2-medium-pool'
+
+gcloud container clusters update 'allprojects-cluster' \
+   --update-addons=GcePersistentDiskCsiDriver=ENABLED
+```

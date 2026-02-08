@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongodb-atlas-config
+data:
+  # Atlas cluster host
+  MONGODB_HOST: cluster0.cd1r6ev.mongodb.net
+  # Connection protocol
+  MONGODB_PROTOCOL: mongodb+srv
+  # Connection options
+  MONGODB_OPTIONS: "retryWrites=true&w=majority"
+  # Database names for each app
+  CODERPRABHU_DB_NAME: CoderPraBhuApi
+  CAMPAPI_DB_NAME: CampApiDB
+  MENUAPI_DB_NAME: MenuApi
+  CAMPDB_DB_NAME: campdb
