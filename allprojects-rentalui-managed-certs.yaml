@@ -1,0 +1,39 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: homepagetornacampsitesdotcommanagedcert
+spec:
+  domains:
+    - homepage.tornacampsites.com
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: carrentaltornacampsitesdotcommanagedcert
+spec:
+  domains:
+    - car-rental.tornacampsites.com
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: realestatetornacampsitesdotcommanagedcert
+spec:
+  domains:
+    - real-estate.tornacampsites.com
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: hospitalitytornacampsitesdotcommanagedcert
+spec:
+  domains:
+    - hospitality.tornacampsites.com
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: jewelrytornacampsitesdotcommanagedcert
+spec:
+  domains:
+    - jewelry.tornacampsites.com

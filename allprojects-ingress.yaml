@@ -4,7 +4,7 @@ metadata:
   name: allprojects-ingress
   annotations:
     kubernetes.io/ingress.global-static-ip-name: allprojects-ip
-    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert2025,whatsgoodonmenuapimanagedcert2025,wwwwhatsgoodonmenudotcommanagedcert2025, tornacampsitesdotcommanagedcert, wwwtornacampsitesdotcommanagedcert, coderprabhudotcommanagedcert, coderprabhuwwwdotcommanagedcert, coderprabhuapidotcommanagedcert, newapitornacampsitesdotcommanagedcert"
+    networking.gke.io/managed-certificates: "whatsgoodonmenudotcommanagedcert2025,whatsgoodonmenuapimanagedcert2025,wwwwhatsgoodonmenudotcommanagedcert2025, tornacampsitesdotcommanagedcert, wwwtornacampsitesdotcommanagedcert, coderprabhudotcommanagedcert, coderprabhuwwwdotcommanagedcert, coderprabhuapidotcommanagedcert, newapitornacampsitesdotcommanagedcert, homepagetornacampsitesdotcommanagedcert, carrentaltornacampsitesdotcommanagedcert, realestatetornacampsitesdotcommanagedcert, hospitalitytornacampsitesdotcommanagedcert, jewelrytornacampsitesdotcommanagedcert"
     networking.gke.io/v1beta1.FrontendConfig: allprojects-ingress-security-config
   labels:
     app: allprojects
@@ -100,3 +100,53 @@ spec:
               name: camp-newapi-backend
               port:
                 name: httpapiport
+  - host: homepage.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: rentalui-homepage
+              port:
+                name: http
+  - host: car-rental.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: rentalui-car-rental
+              port:
+                name: http
+  - host: real-estate.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: rentalui-real-estate
+              port:
+                name: http
+  - host: hospitality.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: rentalui-hospitality
+              port:
+                name: http
+  - host: jewelry.tornacampsites.com
+    http:
+      paths:
+        - path: /*
+          pathType: ImplementationSpecific
+          backend:
+            service:
+              name: rentalui-jewelry
+              port:
+                name: http
