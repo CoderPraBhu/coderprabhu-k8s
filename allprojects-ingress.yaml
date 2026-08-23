@@ -159,4 +159,4 @@ spec:
             service:
               name: rentalapi-backend
               port:
-                name: httprentalapiport
+                number: 8080
