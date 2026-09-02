@@ -37,3 +37,11 @@ metadata:
 spec:
   domains:
     - jewelry.tornacampsites.com
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: gymtornacampsitesdotcommanagedcert
+spec:
+  domains:
+    - gym.tornacampsites.com
