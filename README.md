@@ -456,3 +456,21 @@ kubectl delete pv pvc-137ccc1b-dd22-4c36-806f-0086dd65d66c
 # Verify GCP disk is deleted (reclaim policy=Delete handles it automatically)
 gcloud compute disks list --project=all-projects-292200 --filter="name:pvc" --format="table(name,status)"
 ```
+
+# Migrate allprojects-ingress → Gateway API + Certificate Manager (Sep 2026)
+Reason: hit the 15-SSL-cert limit on the ingress target proxy at 16 hostnames
+(gym.tornacampsites.com stuck Provisioning). GKE Ingress can't use Certificate
+Manager, so moving to a GKE Gateway + HTTPRoutes with a Certificate Manager cert
+map (3 wildcard certs). Full plan + runbook: docs/gateway-api-migration.md
+
+## Phase 0 — prerequisites (non-disruptive)
+```
+gcloud config set account prashantbhuruk88@gmail.com
+gcloud config set project all-projects-292200
+gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
+gcloud services enable certificatemanager.googleapis.com
+gcloud container clusters update allprojects-cluster --zone us-west1-b --gateway-api=standard
+kubectl get gatewayclass
+kubectl get crd gateways.gateway.networking.k8s.io httproutes.gateway.networking.k8s.io
+# (packaged as: bash gateway/migrate-phase0.sh)
+```
