@@ -542,14 +542,17 @@ entries, the `<apex>-wild` cert, and `<apex>-dnsauth`.
       these resources. Supersedes the `sanskruti2489@gmail.com` note in CLAUDE.md for the
       Gateway/Certificate Manager resources.
 - [x] DNS console access for all three apex domains confirmed available to the operator.
-- [ ] Decide: one HTTPRoute per app group vs one per hostname.
-- [ ] Verify `GCPGatewayPolicy` schema on GKE 1.36 (`kubectl explain`).
-- [ ] Verify Certificate Manager wildcard cert-map-entry behavior and whether a
-      `PRIMARY` matcher entry is required for the target proxy default cert.
-- [ ] Decide whether to accept wildcard certs (broader blast radius if a key leaks) vs
-      explicit SAN lists (safer, but new subdomain under an existing apex = cert recreate).
+- [x] HTTPRoute layout: **one route per backend, grouped into 4 files by app**
+      (`gateway/httproute-{whatsgoodonmenu,coderprabhu,tornacampsites,rentalui}.yaml`).
+- [x] `GCPGatewayPolicy` schema verified on GKE 1.36: `spec.default.sslPolicy` (string),
+      `spec.targetRef` {group,kind,name}. Manifest: `gateway/allprojects-gateway.yaml`.
+- [x] Wildcard cert-map entries: created apex + `*.apex` entries per domain plus one
+      `--set-primary` entry — all 7 `ACTIVE`. Certs `ACTIVE` in ~4 min.
+- [x] Wildcard certs accepted (removes per-subdomain cert ops; matches the "agent adds a
+      domain" workflow). Blast radius noted; CAA `pki.goog` already set on coderprabhu.com.
 - [ ] NodePort Services → NEG health checks: confirm each backend goes `HEALTHY` on the
-      Gateway before cutover.
+      Gateway in Phase 3 before cutover. No `BackendConfig` exists; Gateway derives health
+      checks from pod readiness probes (UI services have none → default `GET /` check).
 - [ ] `coderprabhu-api-backend` / several Services also expose `:443` — Gateway routes
       target `:8080` (HTTP) only, matching current Ingress behavior. Confirm no backend
       expects HTTPS from the LB.

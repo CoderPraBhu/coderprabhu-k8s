@@ -1,0 +1,40 @@
+# Global external Application Load Balancer, replacing allprojects-ingress.
+# TLS comes from Certificate Manager via the certmap annotation (no tls: block).
+# See docs/gateway-api-migration.md.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: allprojects-gateway
+  annotations:
+    networking.gke.io/certmap: allprojects-cert-map
+spec:
+  gatewayClassName: gke-l7-global-external-managed
+  addresses:
+  - type: NamedAddress
+    value: allprojects-gw-ip
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same
+  - name: https
+    protocol: HTTPS
+    port: 443
+    allowedRoutes:
+      namespaces:
+        from: Same
+---
+# Min TLS 1.2 (MODERN) — replaces the FrontendConfig sslPolicy.
+apiVersion: networking.gke.io/v1
+kind: GCPGatewayPolicy
+metadata:
+  name: allprojects-gw-policy
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: allprojects-gateway
+  default:
+    sslPolicy: allprojects-ingress-ssl-policy

@@ -513,6 +513,32 @@ gcloud certificate-manager maps entries create default-primary --map=allprojects
 gcloud certificate-manager certificates list --format="table(name,managed.state,managed.domains)"
 # (packaged as: bash gateway/migrate-phase1b.sh)
 ```
+Result: tornacampsites-wild / coderprabhu-wild / whatsgoodonmenu-wild ACTIVE;
+7 map entries ACTIVE (apex + *.apex per domain, plus default-primary).
+
+## Phase 2 — reserve the Gateway static IP (non-disruptive)
+```
+gcloud compute addresses create allprojects-gw-ip --global --ip-version=IPV4
+gcloud compute addresses describe allprojects-gw-ip --global --format='value(address)'
+# (packaged as: bash gateway/migrate-phase2.sh)
+```
+
+## Phase 3 — deploy Gateway + HTTPRoutes alongside the Ingress (non-disruptive)
+Manifests in gateway/: allprojects-gateway.yaml (Gateway + GCPGatewayPolicy),
+httproute-redirect.yaml, and httproute-{whatsgoodonmenu,coderprabhu,tornacampsites,rentalui}.yaml
+```
+kubectl apply -f gateway/allprojects-gateway.yaml
+kubectl apply -f gateway/httproute-redirect.yaml
+kubectl apply -f gateway/httproute-whatsgoodonmenu.yaml
+kubectl apply -f gateway/httproute-coderprabhu.yaml
+kubectl apply -f gateway/httproute-tornacampsites.yaml
+kubectl apply -f gateway/httproute-rentalui.yaml
+kubectl wait --for=condition=Programmed gateway/allprojects-gateway --timeout=900s
+kubectl get gateway allprojects-gateway -o wide
+kubectl get httproute
+# then probe every hostname against the Gateway IP with curl --resolve
+# (packaged as: bash gateway/migrate-phase3.sh  — applies, waits, probes all 16 hosts)
+```
 
 ## Onboard a NEW apex domain later (e.g. newbrand.com)
 Gateway / IP / routing policy unchanged — just a wildcard cert + 2 map entries
