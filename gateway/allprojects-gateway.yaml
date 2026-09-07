@@ -11,7 +11,7 @@ spec:
   gatewayClassName: gke-l7-global-external-managed
   addresses:
   - type: NamedAddress
-    value: allprojects-gw-ip
+    value: allprojects-ip   # 34.98.91.174 — moved here from the old Ingress at cutover
   listeners:
   - name: http
     protocol: HTTP

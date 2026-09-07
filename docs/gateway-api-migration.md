@@ -674,3 +674,40 @@ via the snapshot.
 ### After everything is repointed
 Update `CLAUDE.md` (cluster table: `allprojects-cluster` → `allprojects-v2`, and the
 `k8s/` deploy note) and `README.md`.
+
+---
+
+## 11. Cutover outcome (2026-09-07)
+
+**Done.** `allprojects-v2` (VPC-native) Gateway serves all 16 hostnames on
+`34.98.91.174`. `gym.tornacampsites.com` — the original problem — resolves with a valid
+cert. No DNS records changed.
+
+- Workloads restored from snapshot: 8 Deployments, all Ready; NEGs populate (size ≥1),
+  backends `HEALTHY`.
+- `menu-api-backend` needed `gateway/healthcheck-menu-api.yaml` (Spring Boot `GET /` = 404).
+- Cutover: deleted old Ingress → `allprojects-ip` released → `kubectl patch` Gateway
+  `spec.addresses` to `allprojects-ip` (in-place, no Gateway recreate needed) → GKE
+  rebuilt the forwarding rules + url-map on `34.98.91.174`.
+- **Outage window ≈ 15 min** (00:19–00:34 PT), off-peak — from Ingress delete to the new
+  frontend finishing global propagation. 404s during the window were url-map propagation,
+  not misconfig.
+- `gateway/allprojects-gateway.yaml` updated: `addresses[0].value: allprojects-ip`.
+
+### Still open
+- [ ] **`50-decommission.sh`** — delete old ManagedCertificates (17), delete
+  `allprojects-cluster`, release `allprojects-gw-ip`. Held deliberately as a rollback
+  path; run once v2 has served prod cleanly for a while.
+- [ ] **`45-repoint-cloudbuild.sh`** + merge/push the 4 repo branches (§10).
+- [ ] `CLAUDE.md` / `README.md`: cluster is now `allprojects-v2`.
+- [ ] Old cluster still bills until deleted (single e2-custom-2-3072 node).
+
+### Rollback (while the old cluster still exists)
+Re-apply the Ingress on the old cluster and move the IP back:
+```
+kubectl --context allprojects-v2 patch gateway allprojects-gateway --type=merge \
+  -p '{"spec":{"addresses":[{"type":"NamedAddress","value":"allprojects-gw-ip"}]}}'
+# wait for allprojects-ip to release, then:
+kubectl --context allprojects-cluster apply -f allprojects-ingress-security-config.yaml -f allprojects-ingress.yaml
+```
+(`allprojects-gw-ip` is still reserved until `50-decommission.sh`.)
