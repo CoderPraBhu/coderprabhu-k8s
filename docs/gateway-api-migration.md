@@ -1,23 +1,17 @@
 # allprojects-cluster: Ingress → Gateway API + Certificate Manager migration
 
-> ## ⚠️ BLOCKED at Phase 3 (2026-09-06)
-> **`allprojects-cluster` is routes-based (`ipAllocationPolicy.useRoutes: true`), not
-> VPC-native.** GKE Gateway only supports NEG (container-native) backends, which require
-> VPC-native (alias IPs). The Gateway, forwarding rules, target proxies, and cert map all
-> came up fine and TLS terminates correctly, but every backend NEG stays **size 0** — the
-> routes-based cluster has no VM alias IPs to register pod endpoints — so every hostname
-> returns **502**.
->
-> **Routes-based → VPC-native is not an in-place change** (no `--enable-ip-alias` on
-> `clusters update`). The Gateway path requires a **new VPC-native cluster**.
->
-> The cluster is **fully stateless** (0 StatefulSets/PVC/PV; MongoDB is on Atlas; 8
-> Deployments + Services), so a rebuild is tractable. Certificate Manager resources
-> (cert map + 3 wildcard certs, all ACTIVE) are project-level and **carry over unchanged**.
->
-> Decision pending — see §8.
+> ## History
+> Phase 3 was **blocked**: `allprojects-cluster` was routes-based (`useRoutes: true`), and
+> GKE Gateway requires VPC-native (NEG backends) — NEGs stayed size 0, every host 502.
+> Routes-based → VPC-native is not an in-place change, so the fix was a new cluster.
+> **Decision: Option A** (§8/§9) — rebuilt as **`allprojects-v2`** (VPC-native), re-applied
+> the 8 stateless workloads, deployed the Gateway there. Certificate Manager resources
+> carried over unchanged. Cutover kept the IP (`allprojects-ip` / 34.98.91.174 moved from
+> the old Ingress to the v2 Gateway — no DNS edits). See §9 for the runbook, §10 for the
+> Cloud Build repoint.
 
-**Status:** Blocked — started 2026-09-06
+**Status:** Cutover executed 2026-09-07 — see §9 / §11
+**Started:** 2026-09-06
 **Scope:** `allprojects-cluster` only (`all-projects-292200`). The `coderprabhu-cluster` is not touched.
 **Owner account:** `prashantbhuruk88@gmail.com` (has `roles/owner` on `all-projects-292200`)
 
