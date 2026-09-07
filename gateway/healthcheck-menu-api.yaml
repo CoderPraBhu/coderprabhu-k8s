@@ -1,0 +1,18 @@
+# menu-api-backend serves Spring Boot; GET / is 404 so the default Gateway
+# health check marks it UNHEALTHY. Point the check at the readiness endpoint
+# (same path the pod readinessProbe uses).
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: menu-api-backend-hc
+spec:
+  targetRef:
+    group: ""
+    kind: Service
+    name: menu-api-backend
+  default:
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_SERVING_PORT
+        requestPath: /actuator/health/readiness

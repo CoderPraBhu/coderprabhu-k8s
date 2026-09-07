@@ -1,0 +1,17 @@
+# car-rental.tornacampsites.com -> rentalui-car-rental:5174
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: route-tornacampsites-car-rental
+spec:
+  parentRefs:
+  - name: allprojects-gateway
+    sectionName: https
+  hostnames:
+  - car-rental.tornacampsites.com
+  rules:
+  - matches:
+    - path: { type: PathPrefix, value: / }
+    backendRefs:
+    - name: rentalui-car-rental
+      port: 5174

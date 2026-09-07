@@ -3,6 +3,13 @@ This repository holds k8s manifests for
 * https://tornacampsites.com
 * https://whatsgoodonmenu.com 
 
+> **Sep 2026:** the `allprojects` apps now run on **`allprojects-v2`** (VPC-native GKE
+> cluster) behind a **GKE Gateway** + **Certificate Manager** cert map, not the old
+> `allprojects-cluster` / Ingress. Static IP `allprojects-ip` (34.98.91.174) is unchanged.
+> Full runbook + history: [`docs/gateway-api-migration.md`](docs/gateway-api-migration.md).
+> Manifests: [`gateway/`](gateway/). Rebuild scripts: [`migration/`](migration/).
+> `coderprabhu-cluster` is unchanged.
+
 Git Repo for CoderPraBhu.com UI: https://github.com/CoderPraBhu/coderprabhu-ui  
 Git Repo for CoderPraBhu.com API: https://github.com/CoderPraBhu/coderprabhu-api  
 This Repo for K8S: https://github.com/CoderPraBhu/coderprabhu-k8s  
@@ -215,9 +222,10 @@ gcloud auth list
 To set the active account, run:
 
 Switch to new account: 
-gcloud config set account sanskruti2489@gmail.com
+gcloud config set account prashantbhuruk88@gmail.com
 gcloud config set project all-projects-292200
-gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
+gcloud container clusters get-credentials allprojects-v2 --zone us-west1-b
+# (was: sanskruti2489@gmail.com / allprojects-cluster, retired Sep 2026)
 
 Switch to old account: 
 gcloud config set account skolpe@mail.ccsf.edu
@@ -423,4 +431,137 @@ gcloud container clusters upgrade 'allprojects-cluster' --project 'all-projects-
 
 gcloud container clusters update 'allprojects-cluster' \
    --update-addons=GcePersistentDiskCsiDriver=ENABLED
+```
+
+# Migrate allprojects-cluster node pool: e2-medium → e2-custom-2-3072 (Feb 2026)
+```
+gcloud container node-pools create allprojects-e2-custom-pool \
+  --cluster=allprojects-cluster \
+  --machine-type=e2-custom-2-3072 \
+  --num-nodes=1 \
+  --zone=us-west1-b \
+  --project=all-projects-292200
+
+kubectl get nodes -l cloud.google.com/gke-nodepool=allprojects-e2-medium-pool -o name
+kubectl cordon gke-allprojects-clus-allprojects-e2-m-fc8b6c4b-vb56
+kubectl drain --force --ignore-daemonsets --delete-emptydir-data --grace-period=10 gke-allprojects-clus-allprojects-e2-m-fc8b6c4b-vb56
+kubectl get pods -o wide
+kubectl wait --for=condition=Ready pod --all --timeout=120s
+
+gcloud container node-pools delete allprojects-e2-medium-pool \
+  --cluster=allprojects-cluster \
+  --zone=us-west1-b \
+  --project=all-projects-292200 \
+  --quiet
+```
+
+# Delete orphaned MongoDB PVC/PV and GCP disk (Feb 2026)
+# MongoDB StatefulSet was removed (migrated to Atlas); PVC/PV lingered
+```
+kubectl get pvc,pv
+kubectl delete pvc mongo-persistent-storage-mongo-0
+kubectl delete pv pvc-137ccc1b-dd22-4c36-806f-0086dd65d66c
+# Verify GCP disk is deleted (reclaim policy=Delete handles it automatically)
+gcloud compute disks list --project=all-projects-292200 --filter="name:pvc" --format="table(name,status)"
+```
+
+# Migrate allprojects-ingress → Gateway API + Certificate Manager (Sep 2026)
+Reason: hit the 15-SSL-cert limit on the ingress target proxy at 16 hostnames
+(gym.tornacampsites.com stuck Provisioning). GKE Ingress can't use Certificate
+Manager, so moving to a GKE Gateway + HTTPRoutes with a Certificate Manager cert
+map (3 wildcard certs). Full plan + runbook: docs/gateway-api-migration.md
+
+## Phase 0 — prerequisites (non-disruptive)
+```
+gcloud config set account prashantbhuruk88@gmail.com
+gcloud config set project all-projects-292200
+gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
+gcloud services enable certificatemanager.googleapis.com
+gcloud container clusters update allprojects-cluster --zone us-west1-b --gateway-api=standard
+kubectl get gatewayclass
+kubectl get crd gateways.gateway.networking.k8s.io httproutes.gateway.networking.k8s.io
+# (packaged as: bash gateway/migrate-phase0.sh)
+```
+After --gateway-api=standard the modern CRDs installed but GatewayClasses stayed
+empty ("No resources found") — the deprecated 2021 v1alpha1 preview CRDs were
+still present and block the Gateway controller from registering the new classes.
+Removed them (no Gateway/Route resources used them):
+```
+kubectl delete crd \
+  gatewayclasses.networking.x-k8s.io gateways.networking.x-k8s.io \
+  httproutes.networking.x-k8s.io tcproutes.networking.x-k8s.io \
+  tlsroutes.networking.x-k8s.io udproutes.networking.x-k8s.io \
+  backendpolicies.networking.x-k8s.io gatewaystates.networking.gke.io
+kubectl get gatewayclass   # expect gke-l7-global-external-managed within ~5 min
+# (packaged as: bash gateway/migrate-phase0b.sh)
+```
+Result: gke-l7-global-external-managed / gke-l7-regional-external-managed /
+gke-l7-gxlb / gke-l7-rilb all Accepted=True.
+
+## Phase 1 — Certificate Manager (non-disruptive)
+3 wildcard certs (apex + *.apex), one DNS authorization per apex domain.
+```
+# 1a: cert map + DNS authorizations, then add the 3 printed CNAMEs in DNS console
+gcloud certificate-manager maps create allprojects-cert-map
+gcloud certificate-manager dns-authorizations create tornacampsites-dnsauth  --domain=tornacampsites.com  --type=FIXED_RECORD
+gcloud certificate-manager dns-authorizations create coderprabhu-dnsauth     --domain=coderprabhu.com     --type=FIXED_RECORD
+gcloud certificate-manager dns-authorizations create whatsgoodonmenu-dnsauth --domain=whatsgoodonmenu.com --type=FIXED_RECORD
+gcloud certificate-manager dns-authorizations describe <name> --format="value(dnsResourceRecord.name,dnsResourceRecord.type,dnsResourceRecord.data)"
+# (packaged as: bash gateway/migrate-phase1a.sh)
+
+# --- add _acme-challenge CNAMEs in DNS console, wait for them to resolve ---
+
+# 1b: wildcard certs + map entries (apex, *.apex) + primary entry
+gcloud certificate-manager certificates create tornacampsites-wild  --domains="tornacampsites.com,*.tornacampsites.com"   --dns-authorizations=tornacampsites-dnsauth
+gcloud certificate-manager certificates create coderprabhu-wild     --domains="coderprabhu.com,*.coderprabhu.com"         --dns-authorizations=coderprabhu-dnsauth
+gcloud certificate-manager certificates create whatsgoodonmenu-wild --domains="whatsgoodonmenu.com,*.whatsgoodonmenu.com" --dns-authorizations=whatsgoodonmenu-dnsauth
+gcloud certificate-manager maps entries create <cert>-apex     --map=allprojects-cert-map --hostname="<apex>"    --certificates=<cert>
+gcloud certificate-manager maps entries create <cert>-wildcard --map=allprojects-cert-map --hostname="*.<apex>"  --certificates=<cert>
+gcloud certificate-manager maps entries create default-primary --map=allprojects-cert-map --set-primary         --certificates=tornacampsites-wild
+gcloud certificate-manager certificates list --format="table(name,managed.state,managed.domains)"
+# (packaged as: bash gateway/migrate-phase1b.sh)
+```
+Result: tornacampsites-wild / coderprabhu-wild / whatsgoodonmenu-wild ACTIVE;
+7 map entries ACTIVE (apex + *.apex per domain, plus default-primary).
+
+## Phase 2 — reserve the Gateway static IP (non-disruptive)
+```
+gcloud compute addresses create allprojects-gw-ip --global --ip-version=IPV4
+gcloud compute addresses describe allprojects-gw-ip --global --format='value(address)'
+# (packaged as: bash gateway/migrate-phase2.sh)
+```
+
+## Phase 3 — deploy Gateway + HTTPRoutes alongside the Ingress (non-disruptive)
+gateway/: allprojects-gateway.yaml (Gateway + GCPGatewayPolicy),
+httproute-redirect.yaml, and one httproute-<domain>-<function>.yaml per
+hostname/backend (route name route-<domain>-<function>).
+```
+kubectl apply -f gateway/
+kubectl wait --for=condition=Programmed gateway/allprojects-gateway --timeout=900s
+kubectl get gateway allprojects-gateway -o wide
+kubectl get httproute
+# then probe every hostname against the Gateway IP with curl --resolve
+# (packaged as: bash gateway/migrate-phase3.sh  — applies, waits, probes all 16 hosts)
+```
+
+## Onboard a NEW apex domain later (e.g. newbrand.com)
+Gateway / IP / routing policy unchanged — just a wildcard cert + 2 map entries
+in allprojects-cert-map, then HTTPRoute hostnames + A records.
+See docs/gateway-api-migration.md "Onboard a brand-new apex domain".
+```
+bash gateway/add-apex-domain.sh newbrand.com   # run 1: creates dns-auth, prints CNAME
+#   -> add the _acme-challenge.newbrand.com CNAME in the DNS console (Squarespace
+#      does accept the long value)
+bash gateway/add-apex-domain.sh newbrand.com   # run 2: cert + map entries, wait ACTIVE
+# then: add hostnames to a gateway/httproute-*.yaml, kubectl apply -f gateway/
+#       add A records newbrand.com / www.newbrand.com -> allprojects-gw-ip
+#       optional CAA: 0 issue "pki.goog"
+```
+Equivalent raw commands:
+```
+gcloud certificate-manager dns-authorizations create newbrand-dnsauth --domain=newbrand.com --type=FIXED_RECORD
+gcloud certificate-manager dns-authorizations describe newbrand-dnsauth --format="value(dnsResourceRecord.name,dnsResourceRecord.type,dnsResourceRecord.data)"
+gcloud certificate-manager certificates create newbrand-wild --domains="newbrand.com,*.newbrand.com" --dns-authorizations=newbrand-dnsauth
+gcloud certificate-manager maps entries create newbrand-wild-apex     --map=allprojects-cert-map --hostname="newbrand.com"   --certificates=newbrand-wild
+gcloud certificate-manager maps entries create newbrand-wild-wildcard --map=allprojects-cert-map --hostname="*.newbrand.com" --certificates=newbrand-wild
 ```
