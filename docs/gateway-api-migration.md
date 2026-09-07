@@ -642,3 +642,41 @@ cluster. After a clean cutover, `gateway/allprojects-gateway.yaml` is updated to
 - `coderprabhu-api-app` and `menu-api-app` are deployed **manually from the operator's
   local CLI** (`kubectl apply`). After cutover, run those against the `allprojects-v2`
   context. The snapshot captures their currently-running versions, so nothing is lost.
+
+---
+
+## 10. Cloud Build repoint (so future app deploys hit allprojects-v2)
+
+6 apps deploy via Cloud Build; 2 (`coderprabhu-api`, `menu-api`) deploy manually from the
+operator's CLI. After the cluster rename, deploys must target `allprojects-v2` or they land
+on the deleted cluster.
+
+### Repos with an in-tree `cloudbuild.yaml` (fixed on branch `deploy-to-allprojects-v2`)
+| Repo | Change | Trigger |
+|---|---|---|
+| `campui` | `substitutions._GKE_CLUSTER: allprojects-cluster → allprojects-v2` | `automated-deployment-2` (uses file default) |
+| `rentalapi` | same | `push-to-rental-api` (uses file default) |
+| `rentalui` | same | `push-to-rental-ui` (uses file default) |
+| `coderprabhu-api` | `env CLOUDSDK_CONTAINER_CLUSTER=allprojects-cluster → allprojects-v2` | manual / `sample-trigger-1` |
+
+→ **merge + push** branch `deploy-to-allprojects-v2` in each of those 4 repos.
+
+### Triggers that override `_GKE_CLUSTER` inline (no repo file) — `migration/45-repoint-cloudbuild.sh`
+| Trigger | App | Repo |
+|---|---|---|
+| `automated-deployment-4` | `camp-newapi-app` | campapi |
+| `automated-deployment-3` | `coderprabhu-ui-web` | coderprabhu-ui |
+| `automated-deployment-1` | `menu-ui-web` | whatsgoodonmenuui |
+
+```
+gcloud builds triggers update <name> --update-substitutions=_GKE_CLUSTER=allprojects-v2
+```
+
+### Manual-deploy apps
+`coderprabhu-api` and `menu-api` (`whatsgoodonmenuapi`): run `kubectl apply` against the
+`allprojects-v2` context from now on. Their currently-running versions are already on v2
+via the snapshot.
+
+### After everything is repointed
+Update `CLAUDE.md` (cluster table: `allprojects-cluster` → `allprojects-v2`, and the
+`k8s/` deploy note) and `README.md`.
