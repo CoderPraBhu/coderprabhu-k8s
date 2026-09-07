@@ -487,3 +487,29 @@ kubectl delete crd \
 kubectl get gatewayclass   # expect gke-l7-global-external-managed within ~5 min
 # (packaged as: bash gateway/migrate-phase0b.sh)
 ```
+Result: gke-l7-global-external-managed / gke-l7-regional-external-managed /
+gke-l7-gxlb / gke-l7-rilb all Accepted=True.
+
+## Phase 1 — Certificate Manager (non-disruptive)
+3 wildcard certs (apex + *.apex), one DNS authorization per apex domain.
+```
+# 1a: cert map + DNS authorizations, then add the 3 printed CNAMEs in DNS console
+gcloud certificate-manager maps create allprojects-cert-map
+gcloud certificate-manager dns-authorizations create tornacampsites-dnsauth  --domain=tornacampsites.com  --type=FIXED_RECORD
+gcloud certificate-manager dns-authorizations create coderprabhu-dnsauth     --domain=coderprabhu.com     --type=FIXED_RECORD
+gcloud certificate-manager dns-authorizations create whatsgoodonmenu-dnsauth --domain=whatsgoodonmenu.com --type=FIXED_RECORD
+gcloud certificate-manager dns-authorizations describe <name> --format="value(dnsResourceRecord.name,dnsResourceRecord.type,dnsResourceRecord.data)"
+# (packaged as: bash gateway/migrate-phase1a.sh)
+
+# --- add _acme-challenge CNAMEs in DNS console, wait for them to resolve ---
+
+# 1b: wildcard certs + map entries (apex, *.apex) + primary entry
+gcloud certificate-manager certificates create tornacampsites-wild  --domains="tornacampsites.com,*.tornacampsites.com"   --dns-authorizations=tornacampsites-dnsauth
+gcloud certificate-manager certificates create coderprabhu-wild     --domains="coderprabhu.com,*.coderprabhu.com"         --dns-authorizations=coderprabhu-dnsauth
+gcloud certificate-manager certificates create whatsgoodonmenu-wild --domains="whatsgoodonmenu.com,*.whatsgoodonmenu.com" --dns-authorizations=whatsgoodonmenu-dnsauth
+gcloud certificate-manager maps entries create <cert>-apex     --map=allprojects-cert-map --hostname="<apex>"    --certificates=<cert>
+gcloud certificate-manager maps entries create <cert>-wildcard --map=allprojects-cert-map --hostname="*.<apex>"  --certificates=<cert>
+gcloud certificate-manager maps entries create default-primary --map=allprojects-cert-map --set-primary         --certificates=tornacampsites-wild
+gcloud certificate-manager certificates list --format="table(name,managed.state,managed.domains)"
+# (packaged as: bash gateway/migrate-phase1b.sh)
+```
