@@ -9,18 +9,21 @@
 #   2. Triggers that override _GKE_CLUSTER inline (no repo file) -> this script.
 set -euo pipefail
 
-# trigger name : app
-INLINE_TRIGGERS=(
-  "automated-deployment-4"   # campapi        -> camp-newapi-app
-  "automated-deployment-3"   # coderprabhu-ui -> coderprabhu-ui-web
-  "automated-deployment-1"   # whatsgoodonmenuui -> menu-ui-web
-)
+# `gcloud builds triggers update` needs the trigger TYPE subcommand and, for
+# GitHub triggers, the repo owner/name.
+echo ">> automated-deployment-4 (campapi)"
+gcloud builds triggers update github automated-deployment-4 \
+  --repo-owner=sanskruti29 --repo-name=campapi \
+  --update-substitutions=_GKE_CLUSTER=allprojects-v2
 
-for t in "${INLINE_TRIGGERS[@]}"; do
-  echo ">> $t : set _GKE_CLUSTER=allprojects-v2"
-  gcloud builds triggers update "$t" \
-    --update-substitutions=_GKE_CLUSTER=allprojects-v2
-done
+echo ">> automated-deployment-1 (whatsgoodonmenuui)"
+gcloud builds triggers update github automated-deployment-1 \
+  --repo-owner=sanskruti29 --repo-name=whatsgoodonmenuui \
+  --update-substitutions=_GKE_CLUSTER=allprojects-v2
+
+echo ">> automated-deployment-3 (coderprabhu-ui, mirrored repo)"
+gcloud builds triggers update cloud-source-repositories automated-deployment-3 \
+  --update-substitutions=_GKE_CLUSTER=allprojects-v2
 
 echo
 echo ">> Verify:"

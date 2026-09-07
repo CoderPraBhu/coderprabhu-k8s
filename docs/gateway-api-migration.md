@@ -698,9 +698,15 @@ cert. No DNS records changed.
 - [ ] **`50-decommission.sh`** — delete old ManagedCertificates (17), delete
   `allprojects-cluster`, release `allprojects-gw-ip`. Held deliberately as a rollback
   path; run once v2 has served prod cleanly for a while.
-- [ ] **`45-repoint-cloudbuild.sh`** + merge/push the 4 repo branches (§10).
 - [ ] `CLAUDE.md` / `README.md`: cluster is now `allprojects-v2`.
 - [ ] Old cluster still bills until deleted (single e2-custom-2-3072 node).
+
+### Done (2026-09-07)
+- [x] Cloud Build repos `campui` / `rentalapi` / `rentalui` / `coderprabhu-api` — merged
+  + pushed to their default branch (`_GKE_CLUSTER` / `CLOUDSDK_CONTAINER_CLUSTER`
+  → `allprojects-v2`).
+- [x] Inline-substitution triggers `automated-deployment-4/3/1` (campapi, coderprabhu-ui,
+  whatsgoodonmenuui) — `_GKE_CLUSTER=allprojects-v2` via `45-repoint-cloudbuild.sh`.
 
 ### Rollback (while the old cluster still exists)
 Re-apply the Ingress on the old cluster and move the IP back:
