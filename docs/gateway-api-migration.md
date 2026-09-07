@@ -199,11 +199,16 @@ cutover in Phase 5, and it is reversible.
    ```
    Repeat for `coderprabhu-dnsauth`, `whatsgoodonmenu-dnsauth`.
 3. **STOP.** Add the 3 CNAME records in the DNS console (Squarespace / Google Domains).
-   Each looks like:
+   Each is `_acme-challenge.<apex>. CNAME <uuid>.<n>.authorize.certificatemanager.goog.`
+   Get the exact values (kept out of this repo) with:
+   ```bash
+   for a in tornacampsites-dnsauth coderprabhu-dnsauth whatsgoodonmenu-dnsauth; do
+     gcloud certificate-manager dns-authorizations describe "$a" \
+       --format="value(dnsResourceRecord.name,dnsResourceRecord.type,dnsResourceRecord.data)"
+   done
    ```
-   _acme-challenge.tornacampsites.com.  CNAME  <uuid>.<zone>.authorize.certificatemanager.goog.
-   ```
-   Wait until each resolves:
+   These records are permanent — leave them in place after the migration so the
+   wildcard certs can auto-renew. Wait until each resolves:
    ```bash
    dig +short CNAME _acme-challenge.tornacampsites.com
    ```
