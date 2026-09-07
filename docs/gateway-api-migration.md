@@ -594,3 +594,41 @@ already done. The dns-authorization CNAMEs stay in DNS.
 If a cluster rebuild is on the table anyway (this one is old, single-node, routes-based),
 **Option A** is the clean end state. If not, **Option C** — fix `gym` now via consolidation,
 keep the cert-map groundwork for whenever the cluster is next rebuilt.
+
+---
+
+## 9. DECISION: Option A — rebuild VPC-native (2026-09-06)
+
+New cluster **`allprojects-v2`**: same zone / machine type / RAPID channel as
+`allprojects-cluster`, plus `--enable-ip-alias` (VPC-native) and `--gateway-api=standard`.
+Pod range `10.100.0.0/14`, service range `10.104.0.0/20` — deliberately clear of the old
+cluster's `10.0.0.0/14` / `10.3.240.0/20` so both run in parallel during cutover.
+
+Scripts in `migration/` (run in order; `snapshot/` is gitignored — it holds Secrets):
+
+| Step | Script | Disruptive? | What it does |
+|---|---|---|---|
+| 0 | `00-snapshot.sh` | no (read-only) | Dumps the 8 app Deployments + 14 Services + 4 ConfigMaps + 8 Secrets + the `default-view` CRB from `allprojects-cluster` to `migration/snapshot/`, cleaned of cluster-specific fields (`clean-manifest.py`). |
+| 1 | `10-create-cluster.sh` | no | Creates `allprojects-v2` (VPC-native, Gateway API standard). ~8 min. |
+| 2 | `20-restore-workloads.sh` | no | Applies the snapshot to `allprojects-v2`, waits for all 8 rollouts + endpoints. |
+| 3 | `30-deploy-gateway.sh` | no | Deletes the stale broken Gateway from the **old** cluster (frees `136.68.8.150`), applies `gateway/` to `allprojects-v2`, waits for `Programmed`, probes all 16 hostnames via `curl --resolve`. NEGs should now populate (VPC-native). |
+| — | **DNS cutover** | **yes, reversible** | Repoint all 16 A records `34.98.91.174` → `136.68.8.150` (Phase 4/5 above). |
+| 4 | `40-cutover-and-decommission.sh` | yes | After DNS is verified: deletes the old Ingress + FrontendConfig + ManagedCertificates, deletes `allprojects-cluster`, releases `allprojects-ip`. |
+
+### Carries over unchanged
+- **Certificate Manager**: `allprojects-cert-map` + 3 wildcard certs (all `ACTIVE`) are
+  project-global. The new Gateway references the map by name — no cert work.
+- **`allprojects-gw-ip`** (`136.68.8.150`) — reused; freed from the old Gateway in step 3.
+- **`allprojects-ingress-ssl-policy`** — kept, referenced by the `GCPGatewayPolicy`.
+- **Container images** — all `gcr.io/all-projects-292200/…`, same project; the new node
+  SA (default Compute SA + `devstorage.read_only` scope) pulls them.
+
+### Not handled by these scripts (manual follow-up)
+- **Cloud Build deploy triggers.** 6 of the 8 apps are deployed by `gcp-cloud-build-deploy`
+  from their own repos (coderprabhu-ui, campui, campapi, whatsgoodonmenuui, rentalui,
+  rentalapi). After cutover, update each trigger's cluster target
+  (`_GKE_CLUSTER` substitution / `gke-deploy --cluster`) from `allprojects-cluster`
+  → `allprojects-v2`, else the next app deploy lands on the deleted cluster.
+- `CLAUDE.md` cluster table + `README.md` — update once `allprojects-v2` is live.
+- The two apps not managed by Cloud Build (`coderprabhu-api-app`, `menu-api-app`) — how
+  are they deployed? Confirm before decommissioning the old cluster.
