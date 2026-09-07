@@ -612,8 +612,17 @@ Scripts in `migration/` (run in order; `snapshot/` is gitignored — it holds Se
 | 1 | `10-create-cluster.sh` | no | Creates `allprojects-v2` (VPC-native, Gateway API standard). ~8 min. |
 | 2 | `20-restore-workloads.sh` | no | Applies the snapshot to `allprojects-v2`, waits for all 8 rollouts + endpoints. |
 | 3 | `30-deploy-gateway.sh` | no | Deletes the stale broken Gateway from the **old** cluster (frees `136.68.8.150`), applies `gateway/` to `allprojects-v2`, waits for `Programmed`, probes all 16 hostnames via `curl --resolve`. NEGs should now populate (VPC-native). |
-| — | **DNS cutover** | **yes, reversible** | Repoint all 16 A records `34.98.91.174` → `136.68.8.150` (Phase 4/5 above). |
-| 4 | `40-cutover-and-decommission.sh` | yes | After DNS is verified: deletes the old Ingress + FrontendConfig + ManagedCertificates, deletes `allprojects-cluster`, releases `allprojects-ip`. |
+| 4 | `40-cutover-keep-ip.sh` | **yes — brief outage** | **Keep-the-IP cutover, no DNS changes.** Gate: v2 must already serve `tornacampsites.com` + rental subdomains green on the temp IP. Then: delete old Ingress → wait for `allprojects-ip` to release → `kubectl patch` the v2 Gateway's address to `allprojects-ip` → wait for it to program on `34.98.91.174` → verify all 16 hosts. Expect **~5–10 min outage** for every hostname during the IP move. |
+| 5 | `50-decommission.sh` | yes | After v2 has served prod OK: delete old ManagedCertificates, delete `allprojects-cluster`, release the temp `allprojects-gw-ip`. |
+
+### Cutover choice: keep the IP (no DNS edits)
+Per operator instruction — proceed autonomously, no wait for sign-off, cut over as long as
+the tornacampsites pods are healthy on v2. `allprojects-ip` (`34.98.91.174`) moves from the
+old Ingress to the v2 Gateway, so **no DNS records change**. Cost: a single ~5–10 min
+outage window (all hostnames) while GCP releases the IP and re-provisions the Gateway
+frontend on it. Rollback within the window: re-apply `allprojects-ingress*.yaml` on the old
+cluster. After a clean cutover, `gateway/allprojects-gateway.yaml` is updated to reference
+`allprojects-ip` permanently and `allprojects-gw-ip` is released.
 
 ### Carries over unchanged
 - **Certificate Manager**: `allprojects-cert-map` + 3 wildcard certs (all `ACTIVE`) are
