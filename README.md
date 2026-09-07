@@ -424,3 +424,35 @@ gcloud container clusters upgrade 'allprojects-cluster' --project 'all-projects-
 gcloud container clusters update 'allprojects-cluster' \
    --update-addons=GcePersistentDiskCsiDriver=ENABLED
 ```
+
+# Migrate allprojects-cluster node pool: e2-medium → e2-custom-2-3072 (Feb 2026)
+```
+gcloud container node-pools create allprojects-e2-custom-pool \
+  --cluster=allprojects-cluster \
+  --machine-type=e2-custom-2-3072 \
+  --num-nodes=1 \
+  --zone=us-west1-b \
+  --project=all-projects-292200
+
+kubectl get nodes -l cloud.google.com/gke-nodepool=allprojects-e2-medium-pool -o name
+kubectl cordon gke-allprojects-clus-allprojects-e2-m-fc8b6c4b-vb56
+kubectl drain --force --ignore-daemonsets --delete-emptydir-data --grace-period=10 gke-allprojects-clus-allprojects-e2-m-fc8b6c4b-vb56
+kubectl get pods -o wide
+kubectl wait --for=condition=Ready pod --all --timeout=120s
+
+gcloud container node-pools delete allprojects-e2-medium-pool \
+  --cluster=allprojects-cluster \
+  --zone=us-west1-b \
+  --project=all-projects-292200 \
+  --quiet
+```
+
+# Delete orphaned MongoDB PVC/PV and GCP disk (Feb 2026)
+# MongoDB StatefulSet was removed (migrated to Atlas); PVC/PV lingered
+```
+kubectl get pvc,pv
+kubectl delete pvc mongo-persistent-storage-mongo-0
+kubectl delete pv pvc-137ccc1b-dd22-4c36-806f-0086dd65d66c
+# Verify GCP disk is deleted (reclaim policy=Delete handles it automatically)
+gcloud compute disks list --project=all-projects-292200 --filter="name:pvc" --format="table(name,status)"
+```
