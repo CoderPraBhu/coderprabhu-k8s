@@ -248,7 +248,8 @@ records. Nothing else is affected.
 gcloud compute addresses create allprojects-gw-ip --global --ip-version=IPV4
 gcloud compute addresses describe allprojects-gw-ip --global --format="value(address)"
 ```
-Record the address here: `__________________`
+**`allprojects-gw-ip` = `136.68.8.150`** (reserved 2026-09-06). The Ingress keeps
+`allprojects-ip` = `34.98.91.174` until Phase 6.
 
 ### Phase 3 — Gateway + HTTPRoutes (non-disruptive, runs alongside Ingress)
 
