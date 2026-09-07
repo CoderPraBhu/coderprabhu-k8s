@@ -19,14 +19,17 @@ Files are prefixed by cluster:
 | Prefix | Cluster | GCP Project |
 |--------|---------|-------------|
 | `coderprabhu-*` | `coderprabhu-cluster` | `kubegcp-256806` (account: `skolpe@mail.ccsf.edu`) |
-| `allprojects-*` | `allprojects-cluster` | `all-projects-292200` (account: `sanskruti2489@gmail.com`) |
+| `allprojects-*` | `allprojects-v2` | `all-projects-292200` (account: `prashantbhuruk88@gmail.com`) |
+
+`allprojects-v2` (VPC-native) replaced the routes-based `allprojects-cluster` in Sep 2026
+so GKE Gateway (NEG backends) could be used. Full history: `docs/gateway-api-migration.md`.
 
 Switch cluster context:
 ```bash
 # allprojects cluster
-gcloud config set account sanskruti2489@gmail.com
+gcloud config set account prashantbhuruk88@gmail.com
 gcloud config set project all-projects-292200
-gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
+gcloud container clusters get-credentials allprojects-v2 --zone us-west1-b
 
 # coderprabhu cluster
 gcloud config set account skolpe@mail.ccsf.edu
@@ -36,37 +39,34 @@ gcloud container clusters get-credentials coderprabhu-cluster --zone us-west1-b
 
 ## Deploying / Updating
 
-When a container image version changes, update the relevant deployment YAML first, then apply:
+**App workloads** (Deployments + Services for the 8 apps) are deployed by Cloud Build
+from each app's own repo (`_GKE_CLUSTER: allprojects-v2`), except `coderprabhu-api` and
+`menu-api` which are applied manually — always against the `allprojects-v2` context.
+This repo does **not** hold the app Deployment/Service YAML.
 
+**Routing (allprojects-v2):** a GKE Gateway, not an Ingress. Manifests in `gateway/`:
 ```bash
-kubectl apply -f <name>-deployment.yaml
-kubectl apply -f <name>-service.yaml
-kubectl apply -f <prefix>-ingress.yaml
+kubectl apply -f gateway/            # Gateway + GCPGatewayPolicy + HTTPRoutes + HealthCheckPolicy
 ```
+- `gateway/allprojects-gateway.yaml` — Gateway (`gke-l7-global-external-managed`, static IP
+  `allprojects-ip` = 34.98.91.174, cert map via `networking.gke.io/certmap`) + `GCPGatewayPolicy`
+  (SSL policy `allprojects-ingress-ssl-policy`).
+- `gateway/httproute-redirect.yaml` — HTTP→HTTPS 301.
+- `gateway/httproute-<apex-slug>-<function>.yaml` — one per hostname/backend.
+- Add a subdomain: see `docs/gateway-api-migration.md` §6. Under an existing apex it's
+  just a new HTTPRoute file (the wildcard cert already covers `*.<apex>`).
 
-Key ingress uses `networking.k8s.io/v1` API (`allprojects-ingress.yaml`). The older `coderprabhu-ingress.yaml` is on the deprecated `extensions/v1beta1` API.
-
-HTTPS redirect is enforced via FrontendConfig:
-```bash
-kubectl apply -f allprojects-ingress-security-config.yaml
-```
+`coderprabhu-cluster` still uses the old Ingress (`coderprabhu-ingress.yaml`,
+`extensions/v1beta1`).
 
 ## MongoDB
 
-MongoDB runs as a StatefulSet with a `cvallance/mongo-k8s-sidecar` for replica set initialization. Version is pinned to `mongo:4.4.16` in `allprojects-mongo-statefulset.yaml`.
+**`allprojects-v2` has no in-cluster MongoDB** — the apps use MongoDB Atlas
+(`mongodb-atlas-config` ConfigMap + `mongodb-atlas-secret` Secret in the `default`
+namespace). The `allprojects-mongo-*.yaml` StatefulSet manifests are legacy.
 
-Deploy storage + database:
-```bash
-kubectl apply -f <prefix>-storage-class-hdd.yaml
-kubectl apply -f <prefix>-mongo-headlessservice.yaml
-kubectl apply -f <prefix>-mongo-statefulset.yaml
-```
-
-Access MongoDB shell in a pod:
-```bash
-kubectl exec -it mongo-0 -c mongo -- bash
-# then: mongo
-```
+The `coderprabhu-mongo-*.yaml` StatefulSet (with `cvallance/mongo-k8s-sidecar`,
+`mongo:4.4.16`) still applies to `coderprabhu-cluster`.
 
 Databases: `CoderPraBhuApi`, `CampApiDB`, `MenuApi`, `campdb`
 
@@ -91,19 +91,29 @@ mongorestore --uri="mongodb+srv://UNAME:PW@cluster0.cd1r6ev.mongodb.net/" \
 
 ## Storage
 
-StatefulSet PVCs use GCE persistent disks (pd-standard, 1Gi). **PVCs are not deleted when a StatefulSet is deleted** — manually delete with `kubectl delete pv` and `kubectl delete pvc`.
+`allprojects-v2` is stateless (no PVCs). On `coderprabhu-cluster`, StatefulSet PVCs use
+GCE persistent disks (pd-standard, 1Gi) and **are not deleted when a StatefulSet is
+deleted** — remove manually with `kubectl delete pv` / `kubectl delete pvc`.
 
-## SSL Certificates
+## SSL Certificates (allprojects-v2)
 
-Google-managed certificates are defined inline in the ingress YAML. List all:
+Google Cloud **Certificate Manager**, not inline `ManagedCertificate` objects. One
+certificate map `allprojects-cert-map` holds three **wildcard** certs
+(`tornacampsites-wild`, `coderprabhu-wild`, `whatsgoodonmenu-wild` — each `<apex>` +
+`*.<apex>`), attached to the Gateway via the `networking.gke.io/certmap` annotation.
+Each apex has one permanent `_acme-challenge.<apex>` CNAME (DNS authorization).
+
 ```bash
-gcloud beta compute ssl-certificates list --global
+gcloud certificate-manager certificates list --format="table(name,managed.state,managed.domains)"
+gcloud certificate-manager maps entries list --map=allprojects-cert-map
 ```
 
-SSL policy (TLS 1.2+):
-```bash
-gcloud compute ssl-policies create allprojects-ingress-ssl-policy --profile MODERN --min-tls-version 1.2
-```
+New apex domain: `bash gateway/add-apex-domain.sh <apex>` (see `docs/gateway-api-migration.md` §6).
+
+SSL policy `allprojects-ingress-ssl-policy` (MODERN / TLS 1.2+) is still used — now by the
+`GCPGatewayPolicy`, not a FrontendConfig.
+
+`coderprabhu-cluster` still uses inline `ManagedCertificate` objects in its ingress YAML.
 
 ## Node Pool Operations
 
@@ -118,18 +128,25 @@ gcloud container node-pools delete <old-pool> --cluster <cluster>
 ## Useful Diagnostic Commands
 
 ```bash
-kubectl get ingress
-kubectl describe ingress <ingress-name>
-kubectl get pods -o=wide
-kubectl get statefulset
-kubectl get pv && kubectl get pvc
-kubectl scale deployment <name> --replicas=0   # scale down
-kubectl rollout history statefulset mongo
+# allprojects-v2 (Gateway)
+kubectl get gateway allprojects-gateway -o wide
+kubectl get httproute
+kubectl describe gateway allprojects-gateway
+gcloud compute backend-services list --filter="name~gkegw1" --format="value(name)" \
+  | xargs -I{} sh -c 'gcloud compute backend-services get-health {} --global --format="value(status.healthStatus[0].healthState)"'
+kubectl get pods -o wide
+
+# coderprabhu-cluster (Ingress)
+kubectl get ingress && kubectl describe ingress coderprabhu-ingress
 ```
 
 ## Architecture Notes
 
-- Ingress uses GCP Global Load Balancer (not nginx ingress controller)
-- Static IPs: `coderprabhu-ip` and `allprojects-ip` (global)
-- MongoDB Atlas migration is in progress — `allprojects-mongodb-atlas-configmap.yaml` and `allprojects-mongodb-atlas-secret.yaml` contain placeholder credentials
-- `coderprabhu-web-map-http.yaml` is a GCP URL map for HTTP→HTTPS redirect on the older cluster
+- `allprojects-v2`: VPC-native, single `e2-custom-2-3072` node, RAPID channel, GKE Gateway
+  (`gke-l7-global-external-managed`) on global static IP `allprojects-ip` (34.98.91.174).
+- `coderprabhu-cluster`: unchanged — routes-based, GKE Ingress + GCP Global LB, static IP
+  `coderprabhu-ip`.
+- Apps use MongoDB Atlas (`mongodb-atlas-*` ConfigMap/Secret); no in-cluster Mongo on v2.
+- `migration/` holds the one-time scripts used for the `allprojects-cluster` → `allprojects-v2`
+  rebuild. `migration/50-decommission.sh` (delete old cluster + stale certs) may still be pending.
+- `coderprabhu-web-map-http.yaml` is a GCP URL map for HTTP→HTTPS redirect on `coderprabhu-cluster`.

@@ -3,6 +3,13 @@ This repository holds k8s manifests for
 * https://tornacampsites.com
 * https://whatsgoodonmenu.com 
 
+> **Sep 2026:** the `allprojects` apps now run on **`allprojects-v2`** (VPC-native GKE
+> cluster) behind a **GKE Gateway** + **Certificate Manager** cert map, not the old
+> `allprojects-cluster` / Ingress. Static IP `allprojects-ip` (34.98.91.174) is unchanged.
+> Full runbook + history: [`docs/gateway-api-migration.md`](docs/gateway-api-migration.md).
+> Manifests: [`gateway/`](gateway/). Rebuild scripts: [`migration/`](migration/).
+> `coderprabhu-cluster` is unchanged.
+
 Git Repo for CoderPraBhu.com UI: https://github.com/CoderPraBhu/coderprabhu-ui  
 Git Repo for CoderPraBhu.com API: https://github.com/CoderPraBhu/coderprabhu-api  
 This Repo for K8S: https://github.com/CoderPraBhu/coderprabhu-k8s  
@@ -215,9 +222,10 @@ gcloud auth list
 To set the active account, run:
 
 Switch to new account: 
-gcloud config set account sanskruti2489@gmail.com
+gcloud config set account prashantbhuruk88@gmail.com
 gcloud config set project all-projects-292200
-gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
+gcloud container clusters get-credentials allprojects-v2 --zone us-west1-b
+# (was: sanskruti2489@gmail.com / allprojects-cluster, retired Sep 2026)
 
 Switch to old account: 
 gcloud config set account skolpe@mail.ccsf.edu
