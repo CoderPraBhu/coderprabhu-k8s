@@ -433,10 +433,10 @@ No cert change.
 
 ## 7. Open items / risks
 
-- [ ] Confirm `prashantbhuruk88@gmail.com` is the account that should own these resources
-      long-term (CLAUDE.md documents `sanskruti2489@gmail.com` for this cluster).
-- [ ] Confirm where `*.tornacampsites.com` / `coderprabhu.com` / `whatsgoodonmenu.com`
-      DNS is actually edited (Squarespace vs Google Domains console) and who has access.
+- [x] Account: **`prashantbhuruk88@gmail.com`** (owner on `all-projects-292200`) owns
+      these resources. Supersedes the `sanskruti2489@gmail.com` note in CLAUDE.md for the
+      Gateway/Certificate Manager resources.
+- [x] DNS console access for all three apex domains confirmed available to the operator.
 - [ ] Decide: one HTTPRoute per app group vs one per hostname.
 - [ ] Verify `GCPGatewayPolicy` schema on GKE 1.36 (`kubectl explain`).
 - [ ] Verify Certificate Manager wildcard cert-map-entry behavior and whether a
