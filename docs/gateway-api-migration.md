@@ -1,6 +1,23 @@
 # allprojects-cluster: Ingress → Gateway API + Certificate Manager migration
 
-**Status:** In progress — started 2026-09-06
+> ## ⚠️ BLOCKED at Phase 3 (2026-09-06)
+> **`allprojects-cluster` is routes-based (`ipAllocationPolicy.useRoutes: true`), not
+> VPC-native.** GKE Gateway only supports NEG (container-native) backends, which require
+> VPC-native (alias IPs). The Gateway, forwarding rules, target proxies, and cert map all
+> came up fine and TLS terminates correctly, but every backend NEG stays **size 0** — the
+> routes-based cluster has no VM alias IPs to register pod endpoints — so every hostname
+> returns **502**.
+>
+> **Routes-based → VPC-native is not an in-place change** (no `--enable-ip-alias` on
+> `clusters update`). The Gateway path requires a **new VPC-native cluster**.
+>
+> The cluster is **fully stateless** (0 StatefulSets/PVC/PV; MongoDB is on Atlas; 8
+> Deployments + Services), so a rebuild is tractable. Certificate Manager resources
+> (cert map + 3 wildcard certs, all ACTIVE) are project-level and **carry over unchanged**.
+>
+> Decision pending — see §8.
+
+**Status:** Blocked — started 2026-09-06
 **Scope:** `allprojects-cluster` only (`all-projects-292200`). The `coderprabhu-cluster` is not touched.
 **Owner account:** `prashantbhuruk88@gmail.com` (has `roles/owner` on `all-projects-292200`)
 
@@ -523,3 +540,57 @@ entries, the `<apex>-wild` cert, and `<apex>-dnsauth`.
 - [ ] `coderprabhu-api-backend` / several Services also expose `:443` — Gateway routes
       target `:8080` (HTTP) only, matching current Ingress behavior. Confirm no backend
       expects HTTPS from the LB.
+
+---
+
+## 8. BLOCKER — routes-based cluster, decision needed
+
+### What we know
+- Gateway control plane works: `allprojects-gateway` `Programmed=True` on `136.68.8.150`,
+  all 13 HTTPRoutes `Accepted`/`ResolvedRefs=True`, cert map attached, TLS verifies
+  (`ssl_verify_result=0`), SSL policy applied.
+- Data plane is dead: all `k8s1-…` NEGs are **size 0**, every hostname → **502**.
+  Cause: `useRoutes: true`. NEGs need VPC-native.
+- No in-place fix. The current Ingress keeps working (instance-group backends, which are
+  fine on routes-based) and is untouched.
+
+### Option A — Rebuild as a VPC-native cluster, then finish the Gateway migration
+Because the cluster is stateless this is mostly re-apply:
+1. `gcloud container clusters create allprojects-v2 --enable-ip-alias --zone us-west1-b …`
+   (match machine type e2-custom-2-3072, RAPID channel, GcePersistentDiskCsiDriver off).
+2. `--gateway-api=standard` on the new cluster.
+3. `kubectl apply` all app Deployments + Services, then `kubectl apply -f gateway/`.
+4. Certificate Manager: **no change** — cert map + certs are project-global and already
+   ACTIVE. The new Gateway references `allprojects-cert-map` by name.
+5. Reuse `allprojects-gw-ip` (136.68.8.150); validate with `curl --resolve`.
+6. DNS cutover (Phase 5), then delete the old cluster + its Ingress + ManagedCertificates.
+- **Pros:** ends on the modern stack (VPC-native + Gateway + Certificate Manager, wildcard
+  certs, agent-friendly "add a domain"). Clears 5-year-old cluster cruft.
+- **Cons:** new cluster, re-apply every workload, a real cutover. Node-level differences
+  (NEG health checks, pod CIDR) to shake out.
+
+### Option B — Abandon Gateway, stay on the Ingress and consolidate certs
+1. `kubectl delete -f gateway/`; release `allprojects-gw-ip`; `--gateway-api=disabled`
+   (optional).
+2. Replace the 16 single-domain `ManagedCertificate` objects with a few multi-SAN ones
+   (classic managed certs **do not support wildcards**, but up to 100 SANs each):
+   - `wgom-cert`: whatsgoodonmenu.com, www., api.
+   - `coderprabhu-cert`: coderprabhu.com, www., api.
+   - `tornacampsites-cert`: tornacampsites.com, www., newapi., rentalapi., rentals.,
+     car-rental., real-estate., hospitality., jewelry., gym.
+   16 certs → 3, back under the 15-cert target-proxy limit; `gym` provisions.
+3. Update `allprojects-ingress.yaml` `networking.gke.io/managed-certificates` to the 3.
+- **Pros:** low risk, no cutover, fixes `gym` today, keeps the working cluster.
+- **Cons:** stays on routes-based + Ingress (frozen API). `spec.domains` is immutable —
+  adding a subdomain later means recreating a multi-SAN cert (all its domains
+  re-provision, brief). Keep spare cert slots for new singles.
+
+### Option C — Keep the Certificate Manager cert map for later, do Option B now
+Same as B, but leave `allprojects-cert-map` + the 3 wildcard certs in place (they cost
+nothing) so a future VPC-native rebuild can pick up the Gateway path with the cert work
+already done. The dns-authorization CNAMEs stay in DNS.
+
+### Recommendation
+If a cluster rebuild is on the table anyway (this one is old, single-node, routes-based),
+**Option A** is the clean end state. If not, **Option C** — fix `gym` now via consolidation,
+keep the cert-map groundwork for whenever the cluster is next rebuilt.
