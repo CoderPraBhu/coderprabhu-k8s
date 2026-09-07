@@ -424,15 +424,115 @@ Keep `allprojects-ingress-ssl-policy` (still used by the `GCPGatewayPolicy`).
 
 Verify: `curl -sI https://foo.tornacampsites.com/` — valid cert, expected status.
 
-### Add a subdomain under a *new* apex domain
+### Onboard a brand-new apex domain (e.g. a newly procured `newbrand.com`)
 
-Then you do need a cert: create `<apex>-dnsauth`, add its `_acme-challenge` CNAME,
-create `<apex>-wild` cert (`apex, *.apex`), add two map entries, then proceed as above.
+This is the full checklist for bringing a new top-level domain onto the existing
+Gateway. The Gateway, its IP, and the `GCPGatewayPolicy` do **not** change — the new
+domain is added by (a) one wildcard cert + two cert-map entries in the existing
+`allprojects-cert-map`, and (b) HTTPRoute hostnames. Steps 1–5 are non-disruptive;
+nothing is user-visible until the A records in step 6 point at the Gateway.
+
+**Prerequisites:** the domain is registered and you can edit its DNS zone. Squarespace's
+DNS editor *does* accept the long `_acme-challenge` CNAME value (verified 2026-09-06).
+
+1. **Set context** (once per session):
+   ```bash
+   gcloud config set account prashantbhuruk88@gmail.com
+   gcloud config set project all-projects-292200
+   gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
+   ```
+
+2. **Create the DNS authorization** for the apex (covers `newbrand.com` *and*
+   `*.newbrand.com` — one authorization is enough for the wildcard):
+   ```bash
+   gcloud certificate-manager dns-authorizations create newbrand-dnsauth \
+     --domain="newbrand.com" --type=FIXED_RECORD
+   gcloud certificate-manager dns-authorizations describe newbrand-dnsauth \
+     --format="value(dnsResourceRecord.name,dnsResourceRecord.type,dnsResourceRecord.data)"
+   ```
+
+3. **STOP — add the printed `_acme-challenge.newbrand.com` CNAME** in the domain's DNS
+   console. Wait until it resolves:
+   ```bash
+   dig +short CNAME _acme-challenge.newbrand.com
+   ```
+
+4. **Create the wildcard certificate and its two cert-map entries:**
+   ```bash
+   gcloud certificate-manager certificates create newbrand-wild \
+     --domains="newbrand.com,*.newbrand.com" \
+     --dns-authorizations=newbrand-dnsauth
+
+   gcloud certificate-manager maps entries create newbrand-wild-apex \
+     --map=allprojects-cert-map --hostname="newbrand.com" \
+     --certificates=newbrand-wild
+   gcloud certificate-manager maps entries create newbrand-wild-wildcard \
+     --map=allprojects-cert-map --hostname="*.newbrand.com" \
+     --certificates=newbrand-wild
+   ```
+   Wait for `ACTIVE`:
+   ```bash
+   gcloud certificate-manager certificates describe newbrand-wild \
+     --format="value(managed.state)"     # -> ACTIVE (10-30 min)
+   ```
+   The Gateway picks up the new map entries automatically — no Gateway edit, no restart.
+
+   Steps 2–4 are packaged as: **`bash gateway/add-apex-domain.sh newbrand.com`**
+   (it stops after step 2 to let you add the CNAME, then re-run to finish).
+
+5. **Add routing.** For each hostname the new domain serves, add it to an HTTPRoute
+   attached to the `https` listener with a `backendRef` to the right Service/port
+   (see the routing table in §2 for the pattern), e.g. `gateway/httproute-newbrand.yaml`:
+   ```yaml
+   apiVersion: gateway.networking.k8s.io/v1
+   kind: HTTPRoute
+   metadata:
+     name: route-newbrand
+   spec:
+     parentRefs:
+     - { name: allprojects-gateway, sectionName: https }
+     hostnames: [ "newbrand.com", "www.newbrand.com" ]
+     rules:
+     - matches: [{ path: { type: PathPrefix, value: / } }]
+       backendRefs: [{ name: <service>, port: <port> }]
+   ```
+   Also append the hostnames to `gateway/httproute-redirect.yaml` if that route pins
+   hostnames (it does not by default — the redirect route is hostname-agnostic).
+   ```bash
+   kubectl apply -f gateway/
+   kubectl get httproute route-newbrand -o yaml   # Accepted=True, ResolvedRefs=True
+   ```
+
+6. **Point DNS at the Gateway.** In the DNS console add A records for `newbrand.com`,
+   `www.newbrand.com`, and any other hostnames → the Gateway IP
+   (`gcloud compute addresses describe allprojects-gw-ip --global --format='value(address)'`).
+   Recommended: also add `CAA 0 issue "pki.goog"` (matches `coderprabhu.com`).
+
+7. **Verify:**
+   ```bash
+   for h in newbrand.com www.newbrand.com; do
+     echo "$h  https=$(curl -s -o /dev/null -w '%{http_code}' https://$h/)  http=$(curl -s -o /dev/null -w '%{http_code}' http://$h/)"
+   done
+   ```
+   Valid cert, expected status, `301` on HTTP.
+
+**Rollback:** delete the A records; `kubectl delete httproute route-newbrand`; delete the
+two map entries, the cert, and the dns-authorization. Nothing else is affected.
+
+### Add a subdomain under an existing apex (`foo.tornacampsites.com`)
+
+1. DNS console: `A  foo.tornacampsites.com → <allprojects-gw-ip>`.
+2. Add `foo.tornacampsites.com` to the relevant HTTPRoute's `hostnames` + a rule with the
+   backend Service/port (or a new `gateway/httproute-foo.yaml`). `kubectl apply -f gateway/`.
+3. **No certificate work** — `*.tornacampsites.com` is already covered by `tornacampsites-wild`.
+
+Verify: `curl -sI https://foo.tornacampsites.com/`.
 
 ### Remove a subdomain
 
 Remove the hostname/route from the HTTPRoute, `kubectl apply`, then delete the A record.
-No cert change.
+No cert change. To fully retire an apex domain, also delete its `<apex>-wild*` map
+entries, the `<apex>-wild` cert, and `<apex>-dnsauth`.
 
 ---
 

@@ -513,3 +513,25 @@ gcloud certificate-manager maps entries create default-primary --map=allprojects
 gcloud certificate-manager certificates list --format="table(name,managed.state,managed.domains)"
 # (packaged as: bash gateway/migrate-phase1b.sh)
 ```
+
+## Onboard a NEW apex domain later (e.g. newbrand.com)
+Gateway / IP / routing policy unchanged — just a wildcard cert + 2 map entries
+in allprojects-cert-map, then HTTPRoute hostnames + A records.
+See docs/gateway-api-migration.md "Onboard a brand-new apex domain".
+```
+bash gateway/add-apex-domain.sh newbrand.com   # run 1: creates dns-auth, prints CNAME
+#   -> add the _acme-challenge.newbrand.com CNAME in the DNS console (Squarespace
+#      does accept the long value)
+bash gateway/add-apex-domain.sh newbrand.com   # run 2: cert + map entries, wait ACTIVE
+# then: add hostnames to a gateway/httproute-*.yaml, kubectl apply -f gateway/
+#       add A records newbrand.com / www.newbrand.com -> allprojects-gw-ip
+#       optional CAA: 0 issue "pki.goog"
+```
+Equivalent raw commands:
+```
+gcloud certificate-manager dns-authorizations create newbrand-dnsauth --domain=newbrand.com --type=FIXED_RECORD
+gcloud certificate-manager dns-authorizations describe newbrand-dnsauth --format="value(dnsResourceRecord.name,dnsResourceRecord.type,dnsResourceRecord.data)"
+gcloud certificate-manager certificates create newbrand-wild --domains="newbrand.com,*.newbrand.com" --dns-authorizations=newbrand-dnsauth
+gcloud certificate-manager maps entries create newbrand-wild-apex     --map=allprojects-cert-map --hostname="newbrand.com"   --certificates=newbrand-wild
+gcloud certificate-manager maps entries create newbrand-wild-wildcard --map=allprojects-cert-map --hostname="*.newbrand.com" --certificates=newbrand-wild
+```
