@@ -1,0 +1,17 @@
+# real-estate.tornacampsites.com -> rentalui-real-estate:5176
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: route-tornacampsites-real-estate
+spec:
+  parentRefs:
+  - name: allprojects-gateway
+    sectionName: https
+  hostnames:
+  - real-estate.tornacampsites.com
+  rules:
+  - matches:
+    - path: { type: PathPrefix, value: / }
+    backendRefs:
+    - name: rentalui-real-estate
+      port: 5176

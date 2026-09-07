@@ -124,28 +124,26 @@ only **3 `_acme-challenge` CNAME records**, added once, in the DNS console.
                     │   listener :443 (HTTPS) │──► HTTPRoutes below
                     └─────────────────────────┘
                                  │
-   ┌───────────────┬─────────────┼───────────────┬────────────────────┐
-   │ route-        │ route-      │ route-        │ route-             │
-   │ whatsgoodon.. │ coderprabhu │ tornacampsit..│ rentalui           │
-   │ (3 hostnames) │ (3)         │ core (4)      │ (6)                │
-   └───────────────┴─────────────┴───────────────┴────────────────────┘
+        one HTTPRoute per hostname/backend (13), file + route named
+        httproute-<apex-slug>-<function> / route-<apex-slug>-<function>
 
    GCPGatewayPolicy "allprojects-gw-policy"  → sslPolicy: allprojects-ingress-ssl-policy
 
    Certificate Manager:
      map  allprojects-cert-map
-       entry  *.tornacampsites.com     → cert tornacampsites-wild
-       entry  tornacampsites.com       → cert tornacampsites-wild
-       entry  *.coderprabhu.com        → cert coderprabhu-wild
-       entry  coderprabhu.com          → cert coderprabhu-wild
-       entry  *.whatsgoodonmenu.com    → cert whatsgoodonmenu-wild
-       entry  whatsgoodonmenu.com      → cert whatsgoodonmenu-wild
-       entry  PRIMARY (default)        → cert tornacampsites-wild
+       entry  tornacampsites-wild-apex      hostname tornacampsites.com      → tornacampsites-wild
+       entry  tornacampsites-wild-wildcard  hostname *.tornacampsites.com    → tornacampsites-wild
+       entry  coderprabhu-wild-apex         hostname coderprabhu.com         → coderprabhu-wild
+       entry  coderprabhu-wild-wildcard     hostname *.coderprabhu.com       → coderprabhu-wild
+       entry  whatsgoodonmenu-wild-apex     hostname whatsgoodonmenu.com     → whatsgoodonmenu-wild
+       entry  whatsgoodonmenu-wild-wildcard hostname *.whatsgoodonmenu.com   → whatsgoodonmenu-wild
+       entry  default-primary               (--set-primary)                  → tornacampsites-wild
 ```
 
-Manifests will live in `gateway/`:
-`gateway/allprojects-gateway.yaml`, `gateway/allprojects-gateway-policy.yaml`,
-`gateway/httproute-redirect.yaml`, `gateway/httproute-*.yaml`.
+Manifests in `gateway/`: `allprojects-gateway.yaml` (Gateway + GCPGatewayPolicy),
+`httproute-redirect.yaml`, and one `httproute-<apex-slug>-<function>.yaml` per
+hostname/backend (see the table in Phase 3). `kubectl apply -f gateway/` applies all of
+them (non-YAML files in the dir are ignored).
 
 ---
 
@@ -257,90 +255,37 @@ Record the address here: `__________________`
 **Goal:** a working Gateway on `allprojects-gw-ip`, serving all 16 hostnames, with the
 Ingress still live on `34.98.91.174`.
 
-1. `gateway/allprojects-gateway.yaml`:
-   ```yaml
-   apiVersion: gateway.networking.k8s.io/v1
-   kind: Gateway
-   metadata:
-     name: allprojects-gateway
-     annotations:
-       networking.gke.io/certmap: allprojects-cert-map
-   spec:
-     gatewayClassName: gke-l7-global-external-managed
-     addresses:
-     - type: NamedAddress
-       value: allprojects-gw-ip
-     listeners:
-     - name: http
-       protocol: HTTP
-       port: 80
-     - name: https
-       protocol: HTTPS
-       port: 443
-       # TLS is supplied by the certmap annotation; no tls.certificateRefs.
-   ```
-2. `gateway/allprojects-gateway-policy.yaml` — SSL policy (min TLS 1.2), replacing the
-   FrontendConfig `sslPolicy`:
-   ```yaml
-   apiVersion: networking.gke.io/v1
-   kind: GCPGatewayPolicy
-   metadata:
-     name: allprojects-gw-policy
-   spec:
-     targetRef:
-       group: gateway.networking.k8s.io
-       kind: Gateway
-       name: allprojects-gateway
-     default:
-       sslPolicy: allprojects-ingress-ssl-policy
-   ```
-   > Verify the exact `GCPGatewayPolicy` schema at apply time (`kubectl explain
-   > gcpgatewaypolicy.spec`) — field names have changed across GKE versions.
-3. `gateway/httproute-redirect.yaml` — HTTP→HTTPS 301, replacing the FrontendConfig
-   `redirectToHttps`:
-   ```yaml
-   apiVersion: gateway.networking.k8s.io/v1
-   kind: HTTPRoute
-   metadata:
-     name: http-to-https-redirect
-   spec:
-     parentRefs:
-     - name: allprojects-gateway
-       sectionName: http
-     rules:
-     - filters:
-       - type: RequestRedirect
-         requestRedirect:
-           scheme: https
-           statusCode: 301
-   ```
-4. One HTTPRoute per app group, each attached to the `https` listener. Example
-   `gateway/httproute-rentalui.yaml`:
-   ```yaml
-   apiVersion: gateway.networking.k8s.io/v1
-   kind: HTTPRoute
-   metadata:
-     name: route-rentalui
-   spec:
-     parentRefs:
-     - name: allprojects-gateway
-       sectionName: https
-     hostnames:
-     - rentals.tornacampsites.com
-     - car-rental.tornacampsites.com
-     - real-estate.tornacampsites.com
-     - hospitality.tornacampsites.com
-     - jewelry.tornacampsites.com
-     - gym.tornacampsites.com
-     rules:
-     - matches: [{ path: { type: PathPrefix, value: / } }]
-       backendRefs: [{ name: rentalui-homepage, port: 5175 }]   # rentals.*
-     # ...one rule per hostname; use per-hostname HTTPRoutes if clearer...
-   ```
-   > Simpler and less error-prone: **one HTTPRoute per hostname** (16 small files), each
-   > with a single `backendRef`. Verbose but unambiguous and easy to diff when adding a
-   > domain. Decide before writing.
-5. Apply and wait:
+1. **`gateway/allprojects-gateway.yaml`** — `Gateway` (`gke-l7-global-external-managed`,
+   `networking.gke.io/certmap: allprojects-cert-map`, `addresses: [{type: NamedAddress,
+   value: allprojects-gw-ip}]`, HTTP :80 + HTTPS :443 listeners, **no `tls:` block** —
+   TLS comes from the certmap) plus the **`GCPGatewayPolicy`** `allprojects-gw-policy`
+   (`spec.default.sslPolicy: allprojects-ingress-ssl-policy`, verified on GKE 1.36).
+2. **`gateway/httproute-redirect.yaml`** — HTTP→HTTPS 301 (`RequestRedirect` filter on
+   the `http` listener, hostname-agnostic). Replaces FrontendConfig `redirectToHttps`.
+3. **One `HTTPRoute` per hostname/backend**, one file each, attached to the `https`
+   listener:
+
+   | File | Route name | Hostname(s) | Backend |
+   |---|---|---|---|
+   | `httproute-whatsgoodonmenu-ui.yaml` | `route-whatsgoodonmenu-ui` | `whatsgoodonmenu.com`, `www.` | `menu-ui-backend:8080` |
+   | `httproute-whatsgoodonmenu-api.yaml` | `route-whatsgoodonmenu-api` | `api.whatsgoodonmenu.com` | `menu-api-backend:8080` |
+   | `httproute-coderprabhu-ui.yaml` | `route-coderprabhu-ui` | `coderprabhu.com`, `www.` | `coderprabhu-ui-backend:8080` |
+   | `httproute-coderprabhu-api.yaml` | `route-coderprabhu-api` | `api.coderprabhu.com` | `coderprabhu-api-backend:8080` |
+   | `httproute-tornacampsites-ui.yaml` | `route-tornacampsites-ui` | `tornacampsites.com`, `www.` | `new-camp-ui-backend:8080` |
+   | `httproute-tornacampsites-newapi.yaml` | `route-tornacampsites-newapi` | `newapi.tornacampsites.com` | `camp-newapi-backend:8080` |
+   | `httproute-tornacampsites-rentalapi.yaml` | `route-tornacampsites-rentalapi` | `rentalapi.tornacampsites.com` | `rentalapi-backend:8080` |
+   | `httproute-tornacampsites-rentals.yaml` | `route-tornacampsites-rentals` | `rentals.tornacampsites.com` | `rentalui-homepage:5175` |
+   | `httproute-tornacampsites-car-rental.yaml` | `route-tornacampsites-car-rental` | `car-rental.tornacampsites.com` | `rentalui-car-rental:5174` |
+   | `httproute-tornacampsites-real-estate.yaml` | `route-tornacampsites-real-estate` | `real-estate.tornacampsites.com` | `rentalui-real-estate:5176` |
+   | `httproute-tornacampsites-hospitality.yaml` | `route-tornacampsites-hospitality` | `hospitality.tornacampsites.com` | `rentalui-hospitality:5177` |
+   | `httproute-tornacampsites-jewelry.yaml` | `route-tornacampsites-jewelry` | `jewelry.tornacampsites.com` | `rentalui-jewelry:5173` |
+   | `httproute-tornacampsites-gym.yaml` | `route-tornacampsites-gym` | `gym.tornacampsites.com` | `rentalui-gym:5178` |
+
+   Naming: `httproute-<apex-slug>-<function>.yaml` / `route-<apex-slug>-<function>`. The
+   `<function>` (`gym`, `car-rental`, `rentalapi`, …) is generic — the same rental
+   micro-frontends can appear under another apex later as
+   `httproute-<newapex>-gym.yaml` without collision.
+4. Apply and wait:
    ```bash
    kubectl apply -f gateway/
    kubectl describe gateway allprojects-gateway   # Programmed=True, address assigned
@@ -413,16 +358,36 @@ Keep `allprojects-ingress-ssl-policy` (still used by the `GCPGatewayPolicy`).
 ### Add a subdomain `foo.tornacampsites.com`
 
 1. DNS console: add `A  foo.tornacampsites.com → <allprojects-gw-ip>`.
-2. Add the hostname + a rule/route:
-   - append `foo.tornacampsites.com` to `route-rentalui` (or the right group's) `hostnames`,
-     and add a rule with the backend Service + port; **or** add a new
-     `gateway/httproute-foo.yaml`.
-3. `kubectl apply -f gateway/` and check `kubectl get httproute route-... -o yaml` for
-   `Accepted=True`, `ResolvedRefs=True`.
+2. Copy an existing single-hostname route file to
+   `gateway/httproute-tornacampsites-foo.yaml`, set `metadata.name:
+   route-tornacampsites-foo`, the `hostnames`, and the `backendRefs` Service + port.
+3. `kubectl apply -f gateway/httproute-tornacampsites-foo.yaml` and check
+   `kubectl get httproute route-tornacampsites-foo -o yaml` for `Accepted=True`,
+   `ResolvedRefs=True`.
 4. **No certificate work** — `*.tornacampsites.com` is already covered by
    `tornacampsites-wild` and its cert-map entry.
 
 Verify: `curl -sI https://foo.tornacampsites.com/` — valid cert, expected status.
+
+Template (single hostname → single backend):
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: route-<apex-slug>-<function>
+spec:
+  parentRefs:
+  - name: allprojects-gateway
+    sectionName: https
+  hostnames:
+  - <fqdn>
+  rules:
+  - matches:
+    - path: { type: PathPrefix, value: / }
+    backendRefs:
+    - name: <service>
+      port: <port>
+```
 
 ### Onboard a brand-new apex domain (e.g. a newly procured `newbrand.com`)
 
@@ -542,8 +507,9 @@ entries, the `<apex>-wild` cert, and `<apex>-dnsauth`.
       these resources. Supersedes the `sanskruti2489@gmail.com` note in CLAUDE.md for the
       Gateway/Certificate Manager resources.
 - [x] DNS console access for all three apex domains confirmed available to the operator.
-- [x] HTTPRoute layout: **one route per backend, grouped into 4 files by app**
-      (`gateway/httproute-{whatsgoodonmenu,coderprabhu,tornacampsites,rentalui}.yaml`).
+- [x] HTTPRoute layout: **one route per hostname/backend, one file each**, named
+      `httproute-<apex-slug>-<function>.yaml`. `<function>` is generic so rental
+      micro-frontends can recur under a future apex without name collisions.
 - [x] `GCPGatewayPolicy` schema verified on GKE 1.36: `spec.default.sslPolicy` (string),
       `spec.targetRef` {group,kind,name}. Manifest: `gateway/allprojects-gateway.yaml`.
 - [x] Wildcard cert-map entries: created apex + `*.apex` entries per domain plus one

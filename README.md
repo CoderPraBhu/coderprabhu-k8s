@@ -524,15 +524,11 @@ gcloud compute addresses describe allprojects-gw-ip --global --format='value(add
 ```
 
 ## Phase 3 — deploy Gateway + HTTPRoutes alongside the Ingress (non-disruptive)
-Manifests in gateway/: allprojects-gateway.yaml (Gateway + GCPGatewayPolicy),
-httproute-redirect.yaml, and httproute-{whatsgoodonmenu,coderprabhu,tornacampsites,rentalui}.yaml
+gateway/: allprojects-gateway.yaml (Gateway + GCPGatewayPolicy),
+httproute-redirect.yaml, and one httproute-<domain>-<function>.yaml per
+hostname/backend (route name route-<domain>-<function>).
 ```
-kubectl apply -f gateway/allprojects-gateway.yaml
-kubectl apply -f gateway/httproute-redirect.yaml
-kubectl apply -f gateway/httproute-whatsgoodonmenu.yaml
-kubectl apply -f gateway/httproute-coderprabhu.yaml
-kubectl apply -f gateway/httproute-tornacampsites.yaml
-kubectl apply -f gateway/httproute-rentalui.yaml
+kubectl apply -f gateway/
 kubectl wait --for=condition=Programmed gateway/allprojects-gateway --timeout=900s
 kubectl get gateway allprojects-gateway -o wide
 kubectl get httproute

@@ -1,0 +1,17 @@
+# api.coderprabhu.com -> coderprabhu-api-backend:8080
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: route-coderprabhu-api
+spec:
+  parentRefs:
+  - name: allprojects-gateway
+    sectionName: https
+  hostnames:
+  - api.coderprabhu.com
+  rules:
+  - matches:
+    - path: { type: PathPrefix, value: / }
+    backendRefs:
+    - name: coderprabhu-api-backend
+      port: 8080

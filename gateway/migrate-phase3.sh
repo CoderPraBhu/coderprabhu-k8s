@@ -6,12 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo ">> Applying gateway manifests"
-kubectl apply -f gateway/allprojects-gateway.yaml
-kubectl apply -f gateway/httproute-redirect.yaml
-kubectl apply -f gateway/httproute-whatsgoodonmenu.yaml
-kubectl apply -f gateway/httproute-coderprabhu.yaml
-kubectl apply -f gateway/httproute-tornacampsites.yaml
-kubectl apply -f gateway/httproute-rentalui.yaml
+kubectl apply -f gateway/
 
 echo
 echo ">> Waiting for the Gateway to be programmed (LB provisioning, ~5-10 min)"

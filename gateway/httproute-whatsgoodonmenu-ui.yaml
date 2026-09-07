@@ -1,0 +1,18 @@
+# whatsgoodonmenu.com + www -> menu-ui-backend:8080
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: route-whatsgoodonmenu-ui
+spec:
+  parentRefs:
+  - name: allprojects-gateway
+    sectionName: https
+  hostnames:
+  - whatsgoodonmenu.com
+  - www.whatsgoodonmenu.com
+  rules:
+  - matches:
+    - path: { type: PathPrefix, value: / }
+    backendRefs:
+    - name: menu-ui-backend
+      port: 8080
