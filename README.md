@@ -474,3 +474,16 @@ kubectl get gatewayclass
 kubectl get crd gateways.gateway.networking.k8s.io httproutes.gateway.networking.k8s.io
 # (packaged as: bash gateway/migrate-phase0.sh)
 ```
+After --gateway-api=standard the modern CRDs installed but GatewayClasses stayed
+empty ("No resources found") — the deprecated 2021 v1alpha1 preview CRDs were
+still present and block the Gateway controller from registering the new classes.
+Removed them (no Gateway/Route resources used them):
+```
+kubectl delete crd \
+  gatewayclasses.networking.x-k8s.io gateways.networking.x-k8s.io \
+  httproutes.networking.x-k8s.io tcproutes.networking.x-k8s.io \
+  tlsroutes.networking.x-k8s.io udproutes.networking.x-k8s.io \
+  backendpolicies.networking.x-k8s.io gatewaystates.networking.gke.io
+kubectl get gatewayclass   # expect gke-l7-global-external-managed within ~5 min
+# (packaged as: bash gateway/migrate-phase0b.sh)
+```
