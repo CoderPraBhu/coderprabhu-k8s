@@ -630,5 +630,6 @@ Scripts in `migration/` (run in order; `snapshot/` is gitignored — it holds Se
   (`_GKE_CLUSTER` substitution / `gke-deploy --cluster`) from `allprojects-cluster`
   → `allprojects-v2`, else the next app deploy lands on the deleted cluster.
 - `CLAUDE.md` cluster table + `README.md` — update once `allprojects-v2` is live.
-- The two apps not managed by Cloud Build (`coderprabhu-api-app`, `menu-api-app`) — how
-  are they deployed? Confirm before decommissioning the old cluster.
+- `coderprabhu-api-app` and `menu-api-app` are deployed **manually from the operator's
+  local CLI** (`kubectl apply`). After cutover, run those against the `allprojects-v2`
+  context. The snapshot captures their currently-running versions, so nothing is lost.
