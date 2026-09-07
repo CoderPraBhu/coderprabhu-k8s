@@ -694,12 +694,21 @@ cert. No DNS records changed.
   not misconfig.
 - `gateway/allprojects-gateway.yaml` updated: `addresses[0].value: allprojects-ip`.
 
-### Still open
-- [ ] **`50-decommission.sh`** — delete old ManagedCertificates (17), delete
-  `allprojects-cluster`, release `allprojects-gw-ip`. Held deliberately as a rollback
-  path; run once v2 has served prod cleanly for a while.
-- [ ] `CLAUDE.md` / `README.md`: cluster is now `allprojects-v2`.
-- [ ] Old cluster still bills until deleted (single e2-custom-2-3072 node).
+### Decommission — done 2026-09-07
+- [x] Old cluster pods scaled to 0, prod verified 100% on v2.
+- [x] 17 old `ManagedCertificate` objects deleted; `allprojects-cluster` deleted;
+  `allprojects-gw-ip` (temp IP) released; no orphaned compute SSL certs.
+- [x] `CLAUDE.md` / `README.md` updated to `allprojects-v2`.
+
+### App-repo `k8s/` cleanup (2026-09-07)
+The first Cloud Build deploys to v2 failed / created junk because each app repo's `k8s/`
+dir carried old cluster-specific manifests. Fixed + pushed to default branches:
+- **Deleted** every `*-cert.yaml` (classic `ManagedCertificate`) from `campui`, `campapi`,
+  `coderprabhu-ui`, `coderprabhu-api`, `rentalapi`, `whatsgoodonmenuui`,
+  `whatsgoodonmenuapi` — TLS is the Gateway cert map's job now.
+- **Unpinned** `clusterIP` + `nodePort` from the Service manifests in `campui`, `campapi`,
+  `coderprabhu-ui`, `whatsgoodonmenuui` (values were from the old 10.3.240.0/20 range).
+Each repo's `k8s/` now holds only Deployment + Service(s) (+ config/networkpolicy).
 
 ### Done (2026-09-07)
 - [x] Cloud Build repos `campui` / `rentalapi` / `rentalui` / `coderprabhu-api` — merged
