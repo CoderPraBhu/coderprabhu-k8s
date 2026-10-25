@@ -16,7 +16,7 @@ This Repo for K8S: https://github.com/CoderPraBhu/coderprabhu-k8s
 
 # Commands:  
 
-When code is updated update the ui and api deployment yaml with new 
+When code is updated, update the UI and API deployment yaml with the new
 container image versions.
 To create or update the k8s deployment
 ```
