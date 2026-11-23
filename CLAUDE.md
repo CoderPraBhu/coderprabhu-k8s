@@ -18,8 +18,11 @@ Files are prefixed by cluster:
 
 | Prefix | Cluster | GCP Project |
 |--------|---------|-------------|
-| `coderprabhu-*` | `coderprabhu-cluster` | `kubegcp-256806` (account: `skolpe@mail.ccsf.edu`) |
-| `allprojects-*` | `allprojects-v2` | `all-projects-292200` (account: `prashantbhuruk88@gmail.com`) |
+| `coderprabhu-*` | `coderprabhu-cluster` | `kubegcp-256806` (account: `$CODERPRABHU_ACCOUNT`) |
+| `allprojects-*` | `allprojects-v2` | `all-projects-292200` (account: `$ALLPROJECTS_ACCOUNT`) |
+
+The gcloud accounts are personal and are not stored in this repo. Set `ALLPROJECTS_ACCOUNT` and
+`CODERPRABHU_ACCOUNT` in your shell (or ask the owner); `gcloud auth list` shows the accounts you have.
 
 `allprojects-v2` (VPC-native) replaced the routes-based `allprojects-cluster` in Sep 2026
 so GKE Gateway (NEG backends) could be used. Full history: `docs/gateway-api-migration.md`.
@@ -27,12 +30,12 @@ so GKE Gateway (NEG backends) could be used. Full history: `docs/gateway-api-mig
 Switch cluster context:
 ```bash
 # allprojects cluster
-gcloud config set account prashantbhuruk88@gmail.com
+gcloud config set account "$ALLPROJECTS_ACCOUNT"
 gcloud config set project all-projects-292200
 gcloud container clusters get-credentials allprojects-v2 --zone us-west1-b
 
 # coderprabhu cluster
-gcloud config set account skolpe@mail.ccsf.edu
+gcloud config set account "$CODERPRABHU_ACCOUNT"
 gcloud config set project kubegcp-256806
 gcloud container clusters get-credentials coderprabhu-cluster --zone us-west1-b
 ```
@@ -85,9 +88,12 @@ kubectl exec -it mongo-0 -c mongo -- bash
 # then: mongorestore -d MenuApi /dumpfrom/mongobkp/MenuApi
 
 # Restore to MongoDB Atlas
-mongorestore --uri="mongodb+srv://UNAME:PW@cluster0.cd1r6ev.mongodb.net/" \
+mongorestore --uri="mongodb+srv://<user>:<password>@<atlas-cluster-host>/" \
   --archive=./full-backup.archive --gzip
 ```
+
+Never commit Atlas credentials, the Atlas host or backup archives. `mongodb-atlas-secret` values live only
+in the cluster; `allprojects-mongodb-atlas-secret.yaml` is a placeholder template.
 
 ## Storage
 

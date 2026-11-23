@@ -222,13 +222,13 @@ gcloud auth list
 To set the active account, run:
 
 Switch to new account: 
-gcloud config set account prashantbhuruk88@gmail.com
+gcloud config set account "$ALLPROJECTS_ACCOUNT"
 gcloud config set project all-projects-292200
 gcloud container clusters get-credentials allprojects-v2 --zone us-west1-b
-# (was: sanskruti2489@gmail.com / allprojects-cluster, retired Sep 2026)
+# (was: a different account / allprojects-cluster, retired Sep 2026)
 
 Switch to old account: 
-gcloud config set account skolpe@mail.ccsf.edu
+gcloud config set account "$CODERPRABHU_ACCOUNT"
 gcloud config set project kubegcp-256806
 gcloud container clusters get-credentials coderprabhu-cluster --zone us-west1-b
 
@@ -283,11 +283,11 @@ Log in to container and run:
 mongodump 
 
 Logout and copy the files from default dump folder to a local folder 
-kubectl cp mongo-0:dump /Users/Sanskruti/react/mongobkp
+kubectl cp mongo-0:dump ./mongobkp
 
 Change to target cluster: 
 
-kubectl cp /Users/Sanskruti/react/mongobkp mongo-0:dumpfrom 
+kubectl cp ./mongobkp mongo-0:dumpfrom 
 cd to the folder 
 cd dumpfrom 
 mongorestore -d MenuApi /dumpfrom/mongobkp/MenuApi 
@@ -473,7 +473,7 @@ map (3 wildcard certs). Full plan + runbook: docs/gateway-api-migration.md
 
 ## Phase 0 — prerequisites (non-disruptive)
 ```
-gcloud config set account prashantbhuruk88@gmail.com
+gcloud config set account "$ALLPROJECTS_ACCOUNT"
 gcloud config set project all-projects-292200
 gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
 gcloud services enable certificatemanager.googleapis.com
