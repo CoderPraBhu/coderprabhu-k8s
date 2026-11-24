@@ -13,7 +13,7 @@
 **Status:** Cutover executed 2026-09-07 — see §9 / §11
 **Started:** 2026-09-06
 **Scope:** `allprojects-cluster` only (`all-projects-292200`). The `coderprabhu-cluster` is not touched.
-**Owner account:** `prashantbhuruk88@gmail.com` (has `roles/owner` on `all-projects-292200`)
+**Owner account:** `$ALLPROJECTS_ACCOUNT` (has `roles/owner` on `all-projects-292200`)
 
 ---
 
@@ -162,7 +162,7 @@ them (non-YAML files in the dir are ignored).
 
 ```bash
 # context
-gcloud config set account prashantbhuruk88@gmail.com
+gcloud config set account "$ALLPROJECTS_ACCOUNT"
 gcloud config set project all-projects-292200
 gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
 
@@ -414,7 +414,7 @@ DNS editor *does* accept the long `_acme-challenge` CNAME value (verified 2026-0
 
 1. **Set context** (once per session):
    ```bash
-   gcloud config set account prashantbhuruk88@gmail.com
+   gcloud config set account "$ALLPROJECTS_ACCOUNT"
    gcloud config set project all-projects-292200
    gcloud container clusters get-credentials allprojects-cluster --zone us-west1-b
    ```
@@ -515,8 +515,8 @@ entries, the `<apex>-wild` cert, and `<apex>-dnsauth`.
 
 ## 7. Open items / risks
 
-- [x] Account: **`prashantbhuruk88@gmail.com`** (owner on `all-projects-292200`) owns
-      these resources. Supersedes the `sanskruti2489@gmail.com` note in CLAUDE.md for the
+- [x] Account: **`$ALLPROJECTS_ACCOUNT`** (owner on `all-projects-292200`) owns
+      these resources. Supersedes the former-account note in CLAUDE.md for the
       Gateway/Certificate Manager resources.
 - [x] DNS console access for all three apex domains confirmed available to the operator.
 - [x] HTTPRoute layout: **one route per hostname/backend, one file each**, named

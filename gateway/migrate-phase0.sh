@@ -4,7 +4,7 @@
 # See docs/gateway-api-migration.md.
 set -euo pipefail
 
-ACCOUNT="prashantbhuruk88@gmail.com"
+ACCOUNT="${ALLPROJECTS_ACCOUNT:?set ALLPROJECTS_ACCOUNT to the gcloud account that owns all-projects-292200}"
 PROJECT="all-projects-292200"
 CLUSTER="allprojects-cluster"
 ZONE="us-west1-b"

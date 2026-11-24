@@ -1,2 +1,4 @@
 .claude/settings.local.json
 migration/snapshot/
+*.archive
+mongobkp/
