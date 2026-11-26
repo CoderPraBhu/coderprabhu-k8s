@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: default
+resources:
+  - allprojects-gateway.yaml
+  - healthcheck-menu-api.yaml
+  - httproute-coderprabhu-api.yaml
+  - httproute-coderprabhu-ui.yaml
+  - httproute-redirect.yaml
+  - httproute-tornacampsites-car-rental.yaml
+  - httproute-tornacampsites-gym.yaml
+  - httproute-tornacampsites-hospitality.yaml
+  - httproute-tornacampsites-jewelry.yaml
+  - httproute-tornacampsites-newapi.yaml
+  - httproute-tornacampsites-real-estate.yaml
+  - httproute-tornacampsites-rentalapi.yaml
+  - httproute-tornacampsites-rentals.yaml
+  - httproute-tornacampsites-ui.yaml
+  - httproute-whatsgoodonmenu-api.yaml
+  - httproute-whatsgoodonmenu-ui.yaml

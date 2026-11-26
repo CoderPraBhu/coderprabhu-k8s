@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Onboard a brand-new apex domain onto the existing Gateway / cert map.
 #
-#   bash gateway/add-apex-domain.sh newbrand.com
+#   bash scripts/add-apex-domain.sh newbrand.com
 #
 # Run 1: creates the DNS authorization and prints the _acme-challenge CNAME.
 #        -> add that CNAME in the domain's DNS console.
@@ -73,5 +73,5 @@ done
 echo
 echo ">> Cert + map entries done. Next (see docs/gateway-api-migration.md step 5-7):"
 echo "   - add HTTPRoute hostnames for $APEX under the 'https' listener"
-echo "   - add public A records: $APEX, www.$APEX, ... -> \$(gcloud compute addresses describe allprojects-gw-ip --global --format='value(address)')"
+echo "   - add public A records: $APEX, www.$APEX, ... -> \$(gcloud compute addresses describe allprojects-ip --global --format='value(address)')"
 echo "   - optional: CAA 0 issue \"pki.goog\""

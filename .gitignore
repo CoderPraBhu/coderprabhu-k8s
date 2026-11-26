@@ -1,4 +1,5 @@
 .claude/settings.local.json
 migration/snapshot/
+legacy/migration/snapshot/
 *.archive
 mongobkp/

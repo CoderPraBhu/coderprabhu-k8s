@@ -5,9 +5,10 @@ Databases: `CoderPraBhuApi`, `CampApiDB`, `MenuApi`, `campdb`.
 - **`allprojects-v2`** (current): no in-cluster MongoDB. Apps use MongoDB Atlas via the
   `mongodb-atlas-config` ConfigMap and `mongodb-atlas-secret` Secret.
 - **`coderprabhu-cluster`** (legacy): in-cluster MongoDB StatefulSet (`mongo-0`, see
-  `coderprabhu-mongo-*.yaml`).
+  `legacy/old-clusters/coderprabhu-mongo-*.yaml`; the cluster is deleted).
 
-Never commit credentials, Atlas hostnames, visitor data (e.g. IP addresses) or backup archives.
+Never commit credentials, visitor data (e.g. IP addresses) or backup archives. The Atlas host itself is not a
+credential (`infra/configmaps/mongodb-atlas-config.yaml`); the password stays in the cluster-only Secret.
 
 ## Local development
 

@@ -1,0 +1,27 @@
+# Flux v2.10.1 install.yaml (unmodified, in gotk-components.yaml), trimmed to the two controllers phase 1 needs.
+# The node is small (one e2-custom-2-3072 at ~85% memory requests); each controller requests 64Mi.
+# Upgrade Flux: replace gotk-components.yaml with a newer release's install.yaml in a PR.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - gotk-components.yaml
+  - gotk-sync.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: "^(helm-controller|notification-controller|image-reflector-controller|image-automation-controller|source-watcher)$"
+    patch: |
+      $patch: delete
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: unused
+  - target:
+      kind: Service
+      name: "^(notification-controller|webhook-receiver|source-watcher)$"
+    patch: |
+      $patch: delete
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: unused

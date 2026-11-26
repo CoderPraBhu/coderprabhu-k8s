@@ -1,0 +1,85 @@
+# Read-only access for the coderbot agent (home server automation) to allprojects-v2.
+# Applied by the owner from the Mac:  kubectl --context allprojects-v2 apply -f rbac.yaml
+# Undo (also kills every token issued for it):  kubectl --context allprojects-v2 delete -f rbac.yaml
+#
+# Deliberately NOT granted: secrets, pods/exec, pods/attach, pods/portforward, pods/proxy, services/proxy,
+# nodes/proxy, serviceaccounts/token, and no write verb anywhere (no create/update/patch/delete).
+# Checked 2026-11-26: no prod workload puts a credential in a literal env value, so reading pods is safe.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bot-access
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coderbotagent-k8s-viewer
+  namespace: bot-access
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coderbotagent-k8s-readonly
+rules:
+  - apiGroups: [""]
+    resources: [pods, pods/log, services, endpoints, events, configmaps, namespaces, nodes,
+                persistentvolumeclaims, persistentvolumes, serviceaccounts, resourcequotas, limitranges,
+                replicationcontrollers]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets, statefulsets, daemonsets, controllerrevisions]
+    verbs: [get, list, watch]
+  - apiGroups: [batch]
+    resources: [jobs, cronjobs]
+    verbs: [get, list, watch]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: [get, list, watch]
+  - apiGroups: [policy]
+    resources: [poddisruptionbudgets]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses, ingressclasses, networkpolicies]
+    verbs: [get, list, watch]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+  - apiGroups: [events.k8s.io]
+    resources: [events]
+    verbs: [get, list, watch]
+  - apiGroups: [storage.k8s.io]
+    resources: [storageclasses]
+    verbs: [get, list, watch]
+  - apiGroups: [metrics.k8s.io]          # kubectl top
+    resources: [pods, nodes]
+    verbs: [get, list]
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    verbs: [get, list]
+  # Gateway API + GKE gateway policies (prod routing)
+  - apiGroups: [gateway.networking.k8s.io]
+    resources: [gateways, gatewayclasses, httproutes, grpcroutes, referencegrants, backendtlspolicies, tlsroutes]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.gke.io]
+    resources: [healthcheckpolicies, gcpbackendpolicies, gcpgatewaypolicies, managedcertificates]
+    verbs: [get, list, watch]
+  # Flux status (phase 1 GitOps): lets the bot tell whether a merge synced. These CRDs hold no secrets.
+  - apiGroups: [source.toolkit.fluxcd.io, kustomize.toolkit.fluxcd.io, helm.toolkit.fluxcd.io,
+                notification.toolkit.fluxcd.io, image.toolkit.fluxcd.io]
+    resources: ["*"]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: coderbotagent-k8s-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: coderbotagent-k8s-readonly
+subjects:
+  - kind: ServiceAccount
+    name: coderbotagent-k8s-viewer
+    namespace: bot-access
