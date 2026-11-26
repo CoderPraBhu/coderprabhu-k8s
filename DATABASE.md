@@ -7,7 +7,8 @@ Databases: `CoderPraBhuApi`, `CampApiDB`, `MenuApi`, `campdb`.
 - **`coderprabhu-cluster`** (legacy): in-cluster MongoDB StatefulSet (`mongo-0`, see
   `legacy/old-clusters/coderprabhu-mongo-*.yaml`; the cluster is deleted).
 
-Never commit credentials, Atlas hostnames, visitor data (e.g. IP addresses) or backup archives.
+Never commit credentials, visitor data (e.g. IP addresses) or backup archives. The Atlas host itself is not a
+credential (`infra/configmaps/mongodb-atlas-config.yaml`); the password stays in the cluster-only Secret.
 
 ## Local development
 

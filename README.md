@@ -13,6 +13,7 @@ and re-applies every 10 minutes, so a manual `kubectl edit` of anything managed 
 | `kustomization.yaml` | what Flux applies: `flux-system/` + `infra/` (nothing else in the repo is applied) |
 | `flux-system/` | Flux v2.10.1 (source + kustomize controllers only) and the `GitRepository`/`Kustomization` pointing at this repo |
 | `infra/gateway/` | GKE Gateway + GCPGatewayPolicy, HealthCheckPolicy, one HTTPRoute per hostname/backend (all subdomains) |
+| `infra/configmaps/` | `mongodb-atlas-config`, shared by 4 apps (host, DB names, options; no credentials) |
 | `infra/bot-access/` | read-only ServiceAccount + ClusterRole for the coderbot agent (`coderbotagent-k8s-viewer`) |
 | `scripts/add-apex-domain.sh` | Certificate Manager setup for a new apex domain |
 | `docs/domains-and-subdomains.md` | runbook: add/remove subdomains, onboard a new apex, inspect routing/certs |
@@ -25,8 +26,9 @@ own Cloud Build (for example `camp-newapi-config` and `rentalapi-config` carry
 `app.kubernetes.io/managed-by: gcp-cloud-build-deploy`). Don't add those here, or Flux and Cloud Build will fight
 over them.
 
-**No Secrets and no Atlas hostnames in git** (this repo is public). `mongodb-atlas-config` and
-`mongodb-atlas-secret` live only in the cluster.
+**No Secrets or credentials in git** (this repo is public). `mongodb-atlas-secret` (Atlas user/password) lives
+only in the cluster. The Atlas host in `mongodb-atlas-config` is not a credential. Access is protected by the
+password and the Atlas Network Access list.
 
 ## Phase 1 settings
 - `prune: false`: removing a file doesn't delete the object from the cluster yet. Delete it by hand, or turn on

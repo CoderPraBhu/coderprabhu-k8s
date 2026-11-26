@@ -5,7 +5,7 @@ metadata:
   namespace: default
 data:
   # Atlas cluster host
-  MONGODB_HOST: "<atlas-cluster-host>"   # real value only in the cluster (never commit it)
+  MONGODB_HOST: cluster0.cd1r6ev.mongodb.net
   # Connection protocol
   MONGODB_PROTOCOL: mongodb+srv
   # Connection options
