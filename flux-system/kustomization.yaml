@@ -25,3 +25,12 @@ patches:
       kind: Service
       metadata:
         name: unused
+  # Lower memory requests (scheduling reservation only; limits stay 1Gi). Measured use ~30Mi each.
+  # At 64Mi each, the node had ~175Mi free, too little for rentalapi's 256Mi rolling-update surge pod.
+  - target:
+      kind: Deployment
+      name: "^(kustomize-controller|source-controller)$"
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 16Mi
